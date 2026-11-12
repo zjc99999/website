@@ -1,0 +1,29 @@
+---
+/**
+ * 主导航（≤5 项，E6）。全站共用，currentPath 用来标 aria-current。
+ * 所有链接键盘可达；当前页用 aria-current="page" 标注（a11y）。
+ */
+import { NAV } from '../lib/constants';
+
+interface Props {
+  currentPath?: string;
+}
+const { currentPath = '' } = Astro.props;
+---
+
+<nav aria-label="主导航" class="mx-auto flex max-w-3xl flex-wrap gap-6 px-6 py-5 text-sm">
+  {
+    NAV.map((item) => {
+      const active = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+      return (
+        <a
+          href={item.href}
+          aria-current={active ? 'page' : undefined}
+          class:list={['no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2', { 'font-semibold': active, 'opacity-70': !active }]}
+        >
+          {item.label}
+        </a>
+      );
+    })
+  }
+</nav>

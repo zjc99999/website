@@ -1,45 +1,102 @@
 ---
 /**
- * 首页占位（M1 空构建验证用）。
+ * 首页：三层披露的 L1（Hero，首屏不滚动）+ L2（一次滚动即可看到）。
  *
- * 首屏硬性预算（E6）：身份 1 句 / 价值主张 1 句 / 主 CTA 1 / 次 CTA 1 /
- * 导航 ≤5 / 作品卡 ≤3。M3 会把这里拆成 Hero + ProductCard + CTA 等组件，
- * 但预算不变；M8 把 profile.json 占位文案换成真实内容。
+ * 首屏硬性预算（E6）逐项核对：
+ *  - 身份 1 句 / 价值主张 1 句：来自 profile.json（唯一数据源）
+ *  - 主 CTA 1 + 次 CTA 1：Hero 内
+ *  - 导航 ≤5：BaseLayout → Nav
+ *  - 作品卡 ≤3：FEATURED_LIMIT
+ *  - 首屏禁止：长段落、技能标签云、全量日志、动效轮播、聊天挂件、cookie 横幅（均未在模板出现）
+ *  - 零客户端 JS：本页无 <script>、无 client:* 指令
  *
- * 注意：M1 不引入任何客户端 JS（E7 首屏 JS ≤50KB）。
+ * 证据链解析在构建期完成（src/lib/evidence.ts），任一 evidence_id 指向
+ * 不存在条目会让 astro build 失败，因此首页渲染出的证据链接均已验证。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getEntry } from 'astro:content';
+import Hero from '../components/Hero.astro';
+import ProductCard from '../components/ProductCard.astro';
+import LogTimeline from '../components/LogTimeline.astro';
+import CapabilityList from '../components/CapabilityList.astro';
+import CTA from '../components/CTA.astro';
+import { getCollection, getEntry } from 'astro:content';
+import { isPublicProd, FEATURED_LIMIT, RECENT_LOG_LIMIT, CAPABILITY_LIMIT } from '../lib/constants';
+import { resolveEvidenceList } from '../lib/evidence';
 
 const profile = (await getEntry('profile', 'me'))!.data;
+
+const products = (await getCollection('products', isPublicProd))
+  .filter((p) => p.data.featured)
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, FEATURED_LIMIT);
+
+const logs = (await getCollection('log', isPublicProd))
+  .sort((a, b) => b.data.published_at.getTime() - a.data.published_at.getTime())
+  .slice(0, RECENT_LOG_LIMIT);
+
+const capabilities = (await getCollection('capabilities', isPublicProd)).slice(0, CAPABILITY_LIMIT);
+const capItems = await Promise.all(
+  capabilities.map(async (c) => ({
+    id: c.id,
+    category: c.data.category,
+    statement: c.data.statement,
+    evidence: await resolveEvidenceList(c.data.evidence_ids),
+  })),
+);
 ---
 
-<BaseLayout>
-  <nav slot="nav" aria-label="主导航" class="mx-auto flex max-w-3xl gap-6 px-6 py-5 text-sm">
-    <a href="/">首页</a>
-    <a href="/products">作品</a>
-    <a href="/log">创作日志</a>
-    <a href="/capabilities">能力</a>
-    <a href="/about">关于</a>
-  </nav>
+<BaseLayout currentPath="/">
+  <!-- L1 / 3 秒层 -->
+  <Hero
+    availability={profile.availability}
+    headline={profile.headline}
+    value={profile.value}
+  />
 
-  <!-- L1 / 3 秒层：不滚动即回答「你是谁 / 做什么 / 能帮我什么 / 下一步点哪」 -->
-  <section class="mx-auto max-w-3xl px-6 py-16">
-    <p class="text-sm opacity-70">{profile.availability}</p>
-    <h1 class="mt-3 text-3xl font-semibold tracking-tight">{profile.headline}</h1>
-    <p class="mt-3 text-xl">{profile.value}</p>
+  <!-- L2 / 30 秒层：一次滚动内依次看到作品、近期记录、能力证据 -->
+  <div class="mx-auto max-w-3xl space-y-16 px-6 pb-8">
+    <section aria-labelledby="featured-heading">
+      <h2 id="featured-heading" class="text-2xl font-semibold">精选作品</h2>
+      <p class="mt-1 text-sm opacity-70">每个都能点进去看创作记录</p>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        {products.map((p) => (
+          <ProductCard
+            id={p.id}
+            title={p.data.title}
+            tagline={p.data.tagline}
+            stage={p.data.stage}
+            url={p.data.url}
+            repoUrl={p.data.repo_url}
+            launchDate={p.data.launch_date}
+            metrics={p.data.metrics}
+          />
+        ))}
+      </div>
+    </section>
 
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a
-        href="/contact"
-        class="rounded-md bg-neutral-900 px-4 py-2 text-white no-underline dark:bg-white dark:text-neutral-900"
-        >聊聊你的项目</a
-      >
-      <a href="/subscribe" class="rounded-md border px-4 py-2 no-underline">订阅更新</a>
-    </div>
-  </section>
+    <section aria-labelledby="log-heading">
+      <h2 id="log-heading" class="text-2xl font-semibold">近期创作记录</h2>
+      <div class="mt-6">
+        <LogTimeline
+          items={logs.map((l) => ({
+            id: l.id,
+            title: l.data.title,
+            summary: l.data.summary,
+            kind: l.data.kind,
+            publishedAt: l.data.published_at,
+          }))}
+        />
+      </div>
+    </section>
 
-  <footer slot="footer" class="mx-auto max-w-3xl px-6 py-10 text-sm opacity-70">
-    <p>© {new Date().getFullYear()} {profile.name} · 内容与代码同仓，明文可导出</p>
-  </footer>
+    <section aria-labelledby="cap-heading">
+      <h2 id="cap-heading" class="text-2xl font-semibold">能力（附证据）</h2>
+      <p class="mt-1 text-sm opacity-70">不写「精通 XX」，每条都链接到具体作品或日志</p>
+      <div class="mt-6">
+        <CapabilityList items={capItems} />
+      </div>
+    </section>
+
+    <CTA />
+  </div>
 </BaseLayout>

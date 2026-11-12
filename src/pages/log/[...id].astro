@@ -1,0 +1,58 @@
+---
+/**
+ * 单条创作日志详情（L3）。深度消费层：正文 + 关联作品 + 相关记录。
+ * render(entry) → <Content />；related_ids 用 getRelatedLogs 解析。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { render } from 'astro:content';
+import { getLogs, getRelatedLogs } from '../../lib/queries';
+import { KIND_LABEL, formatDate } from '../../lib/constants';
+
+export async function getStaticPaths() {
+  const logs = await getLogs();
+  return logs.map((l) => ({ params: { id: l.id }, props: { log: l } }));
+}
+
+const { log: entry } = Astro.props;
+const { Content } = await render(entry);
+const related = await getRelatedLogs(entry);
+const d = entry.data;
+---
+
+<BaseLayout title={`${d.title} · 创作日志 · Atelier`} description={d.summary} currentPath="/log">
+  <article class="mx-auto max-w-3xl px-6 py-12">
+    <p class="text-sm opacity-70"><a href="/log" class="underline">← 返回日志</a></p>
+    <div class="mt-4 flex flex-wrap items-center gap-3 text-sm opacity-70">
+      <time datetime={d.published_at.toISOString()}>{formatDate(d.published_at)}</time>
+      <span class="rounded border border-neutral-400 px-1.5 py-0.5 text-xs dark:border-neutral-600">
+        {KIND_LABEL[d.kind] ?? d.kind}
+      </span>
+    </div>
+    <h1 class="mt-2 text-3xl font-semibold">{d.title}</h1>
+    <p class="mt-2 text-lg opacity-85">{d.summary}</p>
+
+    <div class="prose mt-8">
+      <Content />
+    </div>
+
+    {
+      related.length > 0 && (
+        <section class="mt-12" aria-labelledby="related-heading">
+          <h2 id="related-heading" class="text-xl font-semibold">相关记录</h2>
+          <ul class="mt-4 space-y-2 text-sm">
+            {related.map((r) => (
+              <li>
+                <a href={`/log/${r.id}`} class="underline">{r.data.title}</a>
+                <span class="opacity-60"> · {formatDate(r.data.published_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <p class="mt-12 text-sm">
+      <a href="/log" class="underline">查看全部创作日志 →</a>
+    </p>
+  </article>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+/** 创作日志全量列表（L3）。支持 6 种短类型，100 字也能发（EX-6 防弃更）。 */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LogTimeline from '../../components/LogTimeline.astro';
+import { getLogs } from '../../lib/queries';
+
+const logs = await getLogs();
+---
+
+<BaseLayout title="创作日志 · Atelier" description="从想法到上线的全过程记录" currentPath="/log">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">创作日志</h1>
+    <p class="mt-2 opacity-80">
+      决策、构建记录、变更、随记、复盘、近况——不一定长，但都是真的。
+    </p>
+
+    <div class="mt-8">
+      <LogTimeline
+        showAll
+        items={logs.map((l) => ({
+          id: l.id,
+          title: l.data.title,
+          summary: l.data.summary,
+          kind: l.data.kind,
+          publishedAt: l.data.published_at,
+        }))}
+      />
+    </div>
+
+    {logs.length === 0 && <p class="mt-8 opacity-70">还没有公开的记录。</p>}
+  </div>
+</BaseLayout>

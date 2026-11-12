@@ -1,27 +1,38 @@
 ---
 /**
- * 全站基础布局。M1 只提供语义骨架与 SEO 占位；
+ * 全站基础布局：语义骨架 + 主导航 + 页脚 + SEO 占位。
  * M4 接入 Seo.astro 组件（meta/OG/结构化数据/canonical）。
  *
- * Astro 7 模板纪律（规划书 EX-2 / D2）：
- *  - Rust 编译器是唯一编译器，标签必须严格闭合，不依赖自动纠错；
- *  - compressHTML 已显式设回 true（见 astro.config.mjs）。
+ * 页面只需 <BaseLayout title="..." description="...">…</BaseLayout>，
+ * nav/footer 由本布局统一注入，避免 11 个页面重复；profile.json 是首屏
+ * 身份与页脚署名的唯一数据源（E6 / 5.3）。
+ *
+ * Astro 7 模板纪律（EX-2 / D2）：所有非 void 标签严格闭合；
+ * compressHTML 已显式设回 true（见 astro.config.mjs）。
  */
 import '../styles/global.css';
+import { getEntry } from 'astro:content';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../lib/constants';
 
 interface Props {
   title?: string;
   description?: string;
+  currentPath?: string;
 }
 
 const {
-  title = 'Atelier · 造物间',
-  description = '以作品为证据、以创作过程建立信任的独立开发者主页',
+  title = SITE.defaultTitle,
+  description = SITE.defaultDescription,
+  currentPath = Astro.url.pathname,
 } = Astro.props;
+
+const profile = (await getEntry('profile', 'me'))!.data;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={SITE.locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,10 +44,10 @@ const {
   </head>
   <body>
     <a href="#main" class="sr-only focus:not-sr-only">跳到正文</a>
-    <slot name="nav" />
+    <Nav currentPath={currentPath} />
     <main id="main">
       <slot />
     </main>
-    <slot name="footer" />
+    <Footer name={profile.name} socials={profile.socials} />
   </body>
 </html>

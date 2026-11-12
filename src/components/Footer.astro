@@ -1,0 +1,38 @@
+---
+/**
+ * 全站页脚。社交外链 ≤3 且只在页脚（E6）；来源为 profile.json 的 socials。
+ * 含内容主权声明与可导出提示（E3）。
+ */
+import { SOCIAL_LIMIT } from '../lib/constants';
+
+interface Social {
+  label: string;
+  url: string;
+}
+interface Props {
+  name: string;
+  socials?: Social[];
+}
+const { name, socials = [] } = Astro.props;
+const links = socials.slice(0, SOCIAL_LIMIT);
+---
+
+<footer class="mx-auto max-w-3xl px-6 py-10 text-sm opacity-70">
+  <p>© {new Date().getFullYear()} {name} · 内容与代码同仓，明文可导出</p>
+  {
+    links.length > 0 && (
+      <ul class="mt-2 flex flex-wrap gap-4">
+        {links.map((s) => (
+          <li>
+            <a href={s.url} rel="me noopener noreferrer" class="underline">{s.label} ↗</a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  <p class="mt-2">
+    <a href="/subscribe" class="underline">订阅更新</a> ·
+    <a href="/contact" class="underline">联系</a> ·
+    <a href="/rss.xml" class="underline">RSS</a>
+  </p>
+</footer>

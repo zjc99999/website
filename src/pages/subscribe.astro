@@ -1,0 +1,29 @@
+---
+/** 订阅页：显式同意 + 来源留痕 + 一键退订说明（概要设计 5.7 / M5 DoD）。 */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SubscribeForm from '../components/SubscribeForm.astro';
+---
+
+<BaseLayout title="订阅更新 · Atelier" description="订阅创作记录与产品更新，可随时退订" currentPath="/subscribe">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">订阅更新</h1>
+    <p class="mt-2 opacity-80">
+      不定期，只发我自己写的东西：新作品、关键决策、复盘。不转卖邮箱，不掺广告。
+    </p>
+
+    <div class="mt-8">
+      <SubscribeForm mode="subscribe" />
+    </div>
+
+    <section class="prose mt-10 text-sm opacity-80" aria-labelledby="privacy-heading">
+      <h2 id="privacy-heading">关于你的数据</h2>
+      <ul>
+        <li>订阅需要你主动勾选同意，我们会记录同意来源与时间。</li>
+        <li>每封邮件都带一键退订链接；退订后不再发送。</li>
+        <li>你可以要求导出或删除你的订阅记录。</li>
+        <li>站内分析不写 cookie，事件里不含明文身份信息。</li>
+      </ul>
+      <p><a href="/privacy">查看完整隐私政策</a></p>
+    </section>
+  </div>
+</BaseLayout>

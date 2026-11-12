@@ -1,0 +1,110 @@
+---
+/**
+ * 订阅/联系表单（M3 组件；M5 接真实端点并实测一次）。
+ *
+ * 设计约束（方案 A / D5）：R1 零后端零密钥，表单优先走第三方端点；
+ * 未配置 PUBLIC_FORM_ENDPOINT 时**自动降级为 mailto: 链接**——这保证
+ * 「拔掉动态层，网站（读）仍完整可用」这一不变量，也让本组件在 M3 就能构建。
+ *
+ * 隐私（概要设计 5.7）：显式同意、来源留痕（隐藏字段）、一键退订说明、
+ * 不存明文 PII 到静态产物；蜜罐字段防机器人。
+ */
+interface Props {
+  /** 'subscribe' | 'contact' —— 决定文案与隐藏来源字段值 */
+  mode?: 'subscribe' | 'contact';
+  /** 收件邮箱（降级 mailto 用），来自 .env 的 PUBLIC_CONTACT_EMAIL */
+  email?: string;
+}
+
+const { mode = 'subscribe', email = import.meta.env.PUBLIC_CONTACT_EMAIL ?? '' } = Astro.props;
+const endpoint = import.meta.env.PUBLIC_FORM_ENDPOINT ?? '';
+const isSubscribe = mode === 'subscribe';
+const heading = isSubscribe ? '订阅更新' : '聊聊你的项目';
+const consentText = isSubscribe
+  ? '我同意接收创作记录与产品更新邮件，可随时一键退订。'
+  : '我同意就本次咨询与我联系；我不会把你的邮箱用于其他用途。';
+const mailSubject = isSubscribe ? '订阅创作记录' : '想聊聊一个项目';
+const mailto = email ? `mailto:${email}?subject=${encodeURIComponent(mailSubject)}` : '';
+---
+
+<section aria-labelledby="form-heading" class="rounded-lg border border-neutral-300 p-6 dark:border-neutral-700">
+  <h2 id="form-heading" class="text-xl font-semibold">{heading}</h2>
+
+  {
+    endpoint ? (
+      <form action={endpoint} method="POST" class="mt-4 space-y-4">
+        <input type="hidden" name="source" value={`site:${mode}`} />
+        <input type="hidden" name="consent_source" value={mode} />
+        <!-- 蜜罐：真人看不见，机器人会填 -->
+        <label class="hidden" aria-hidden="true">
+          请勿填写
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+        </label>
+        {!isSubscribe && (
+          <label class="block text-sm">
+            怎么称呼你
+            <input
+              type="text"
+              name="name"
+              required
+              class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
+            />
+          </label>
+        )}
+        <label class="block text-sm">
+          邮箱
+          <input
+            type="email"
+            name="email"
+            required
+            class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
+          />
+        </label>
+        {!isSubscribe && (
+          <label class="block text-sm">
+            想聊什么（一两句话就够）
+            <textarea
+              name="message"
+              rows="3"
+              class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
+            />
+          </label>
+        )}
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="consent" required class="mt-1" />
+          <span>{consentText}</span>
+        </label>
+        <button
+          type="submit"
+          class="rounded-md bg-neutral-900 px-4 py-2 text-white hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-white dark:text-neutral-900"
+        >
+          {isSubscribe ? '订阅' : '发送'}
+        </button>
+      </form>
+    ) : (
+      <div class="mt-4 space-y-3 text-sm">
+        <p class="opacity-80">
+          表单端点尚未配置（M5 接入）。在此之前也可以直接发邮件，网站其余部分不受影响。
+        </p>
+        {mailto && (
+          <a
+            href={mailto}
+            class="inline-block rounded-md border border-neutral-400 px-4 py-2 no-underline hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800"
+            >写邮件给我 ↗</a
+          >
+        )}
+        {!mailto && (
+          <p class="opacity-60">也可在「关于」页查看其他联系方式。</p>
+        )}
+      </div>
+    )
+  }
+
+  {
+    isSubscribe && (
+      <p class="mt-4 text-xs opacity-60">
+        每封邮件都带退订链接；你的邮箱不会被出售或用于广告。详见隐私政策。
+      </p>
+    )
+  }
+</section>

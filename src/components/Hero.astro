@@ -1,0 +1,40 @@
+---
+/**
+ * L1 / 3 秒层（概要设计 5.2）。首屏不滚动即回答：
+ * 「你是谁 / 做什么 / 能帮我什么 / 下一步点哪」。
+ *
+ * 首屏硬性预算（E6）逐项落在模板里，可逐个 grep 核对：
+ *  身份 1 句（headline）、价值主张 1 句（value）、主 CTA 1、次 CTA 1。
+ * 作品/日志/概览属于 L2，放在 Hero 之下，不计入首屏 L1。
+ */
+import { CTA } from '../lib/constants';
+
+interface Props {
+  availability: string;
+  headline: string;
+  value: string;
+}
+
+const { availability, headline, value } = Astro.props;
+---
+
+<section class="mx-auto max-w-3xl px-6 py-16 sm:py-24" aria-labelledby="hero-title">
+  <p class="text-sm opacity-70">{availability}</p>
+  <h1 id="hero-title" class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+    {headline}
+  </h1>
+  <p class="mt-3 text-xl leading-relaxed">{value}</p>
+
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a
+      href={CTA.primary.href}
+      class="rounded-md bg-neutral-900 px-4 py-2 text-white no-underline hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-white dark:text-neutral-900"
+      >{CTA.primary.label}</a
+    >
+    <a
+      href={CTA.secondary.href}
+      class="rounded-md border border-neutral-400 px-4 py-2 no-underline hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-neutral-600 dark:hover:bg-neutral-800"
+      >{CTA.secondary.label}</a
+    >
+  </div>
+</section>

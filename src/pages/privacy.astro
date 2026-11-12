@@ -1,0 +1,32 @@
+---
+/**
+ * 隐私政策（M3 基础版；M5 接第三方脚本清单后补全）。
+ * 明示：无 cookie 分析、事件不含明文 PII、订阅同意/退订/导出/删除。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="隐私政策 · Atelier" description="这个站点如何处理你的数据" currentPath="/about">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">隐私政策</h1>
+    <div class="prose mt-8 text-sm opacity-85">
+      <h2>我收集什么</h2>
+      <ul>
+        <li>你主动提交的联系/订阅信息（邮箱、可选的姓名与留言）。</li>
+        <li>匿名的页面访问事件：不含 cookie，不含能直接识别你的明文信息。</li>
+      </ul>
+      <h2>我不用它做什么</h2>
+      <ul>
+        <li>不投放行为广告，不把邮箱出售或共享给第三方。</li>
+        <li>不写跨站追踪 cookie；站内分析仅用于了解内容与渠道效果。</li>
+      </ul>
+      <h2>你的权利</h2>
+      <ul>
+        <li>订阅需显式勾选同意，记录来源与时间；每封邮件可一键退订。</li>
+        <li>可随时要求导出或删除你的订阅/联系记录。</li>
+        <li>表单未配置第三方端点时会降级为邮件链接，不影响浏览。</li>
+      </ul>
+      <p>本政策会随接入的第三方服务更新；M5 将附完整第三方脚本清单。</p>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+/** 通用静态内容页渲染（about / now / uses / services / pricing 共用）。 */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'pages'>;
+  currentPath?: string;
+}
+
+const { entry, currentPath } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<BaseLayout
+  title={`${entry.data.title} · Atelier`}
+  description={entry.data.summary}
+  currentPath={currentPath}
+>
+  <article class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">{entry.data.title}</h1>
+    <p class="mt-2 text-lg opacity-80">{entry.data.summary}</p>
+    <div class="prose mt-8">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

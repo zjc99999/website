@@ -1,0 +1,40 @@
+---
+/**
+ * 能力概览（L2）。每条能力 = 一句陈述 + 真实证据链接（E4 证据链的可视化）。
+ *
+ * 关键：evidence 由 src/lib/evidence.ts 在构建期解析；指向不存在条目的
+ * evidence_id 会让 astro build 直接失败，因此这里拿到的都是已验证链接。
+ */
+import type { Evidence } from '../lib/evidence';
+
+interface Capability {
+  id: string;
+  category: string;
+  statement: string;
+  evidence: Evidence[];
+}
+
+interface Props {
+  items: Capability[];
+}
+
+const { items } = Astro.props;
+---
+
+<ul class="space-y-6">
+  {
+    items.map((cap) => (
+      <li id={cap.id}>
+        <p class="text-xs font-medium uppercase tracking-wide opacity-60">{cap.category}</p>
+        <p class="mt-1 text-lg">{cap.statement}</p>
+        <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          {cap.evidence.map((e) => (
+            <li>
+              <a href={e.href} class="underline">证据：{e.label} →</a>
+            </li>
+          ))}
+        </ul>
+      </li>
+    ))
+  }
+</ul>

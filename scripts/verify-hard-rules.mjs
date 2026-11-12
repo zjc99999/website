@@ -59,6 +59,27 @@ consent_at: 2026-11-12
 `,
     expect: 'consent',
   },
+  {
+    name: 'E4-c capability 指向不存在的证据 → build 必须失败（M3 新增）',
+    file: join(ROOT, 'src', 'content', 'capabilities', '__invalid_bad_evidence.md'),
+    body: `---
+title: 坏证据的能力
+summary: 故意违规用于测试
+category: 测试
+statement: 这条能力指向不存在的证据
+status: published
+visibility: public
+published_at: 2026-11-12
+tags: []
+locale: zh-CN
+evidence_ids:
+  - products/definitely-not-real
+---
+
+故意违规。
+`,
+    expect: '[evidence] 证据目标不存在',
+  },
 ];
 
 const runBuild = () =>

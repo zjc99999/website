@@ -1,0 +1,67 @@
+---
+/**
+ * 作品详情（L3 / 3 分钟层）。用 rest 参数 [...id] 以兼容将来含斜杠的自定义 slug。
+ * 正文来自 MDX/Markdown 的 render(entry) → <Content />；
+ * 页面下半部拉取该作品关联的全部创作日志，形成「作品 ↔ 过程」证据链。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LogTimeline from '../../components/LogTimeline.astro';
+import { render } from 'astro:content';
+import { getProducts, getLogsForProduct } from '../../lib/queries';
+import { STAGE_LABEL, formatDate } from '../../lib/constants';
+
+export async function getStaticPaths() {
+  const products = await getProducts();
+  return products.map((p) => ({ params: { id: p.id }, props: { product: p } }));
+}
+
+const { product } = Astro.props;
+const { Content } = await render(product);
+const logs = await getLogsForProduct(product.id);
+const d = product.data;
+---
+
+<BaseLayout
+  title={`${d.title} · 作品 · Atelier`}
+  description={d.summary}
+  currentPath="/products"
+>
+  <article class="mx-auto max-w-3xl px-6 py-12">
+    <p class="text-sm opacity-70">
+      <a href="/products" class="underline">← 返回作品</a>
+    </p>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <h1 class="text-3xl font-semibold">{d.title}</h1>
+      <span class="rounded-full border border-neutral-400 px-2 py-0.5 text-xs dark:border-neutral-600">
+        {STAGE_LABEL[d.stage] ?? d.stage}
+      </span>
+    </div>
+    <p class="mt-2 text-xl">{d.tagline}</p>
+    <p class="mt-2 text-sm opacity-65">
+      {d.launch_date && <>{formatDate(d.launch_date)} 上线 · </>}
+      {d.url && <><a href={d.url} rel="noopener noreferrer" class="underline">访问站点 ↗</a> · </>}
+      {d.repo_url && <a href={d.repo_url} rel="noopener noreferrer" class="underline">源码 ↗</a>}
+    </p>
+
+    <div class="prose mt-8">
+      <Content />
+    </div>
+
+    <section class="mt-12" aria-labelledby="product-logs-heading">
+      <h2 id="product-logs-heading" class="text-2xl font-semibold">这个作品的创作记录</h2>
+      <div class="mt-6">
+        <LogTimeline
+          showAll
+          items={logs.map((l) => ({
+            id: l.id,
+            title: l.data.title,
+            summary: l.data.summary,
+            kind: l.data.kind,
+            publishedAt: l.data.published_at,
+          }))}
+        />
+      </div>
+      {logs.length === 0 && <p class="mt-4 text-sm opacity-70">还没有关联的记录。</p>}
+    </section>
+  </article>
+</BaseLayout>

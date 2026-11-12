@@ -27,7 +27,7 @@ pnpm sync             # 生成 .astro/ 类型（内容集合变更后跑）
 pnpm new:log          # 2 分钟新建一条创作日志（M2 起可用）
 pnpm changelog        # 汇总最近 7 天已发布日志 → exports/ 周报草稿（--all 全部）
 pnpm export:all       # 导出全量明文内容 + 订阅者 CSV 模板 → exports/
-pnpm test:rules       # 验证两条构建期硬校验（E4）被违反时 build 必须失败（M2 起）
+pnpm test:rules       # 验证三条构建期硬校验（E4-a/b/c）被违反时 build 必须失败（M2/M3 起）
 pnpm test             # Vitest（M6 起可用）
 ```
 
@@ -51,7 +51,8 @@ pnpm new:log "给首页做了 3 秒测试"
 在 `src/content/products/` 新建 `.mdx`，按同目录已有文件的 frontmatter 填写；
 阶段字段是 `stage`（取 `idea | building | live | archived`，默认 `building`），
 `featured: true` 才会进首页「精选作品 ≤3」。
-能力必须挂 `evidence_ids`（无证据的能力不允许发布）；案例必须 `consent: true`（未授权客户信息不公开）。
+能力必须挂 `evidence_ids`（无证据的能力不允许发布）；证据 id 写 `"<集合名>/<条目 id>"`（如 `products/atelier`），
+构建期会校验**目标真实存在**，指向不存在的条目会直接让 build 失败；案例必须 `consent: true`（未授权客户信息不公开）。
 
 ## 目录速查
 
@@ -61,8 +62,8 @@ pnpm new:log "给首页做了 3 秒测试"
 | `src/content/` | 全部明文内容，唯一内容源 |
 | `src/content/profile.json` | 首屏身份/价值主张的唯一数据源 |
 | `src/pages/` | 路由与静态生成 |
-| `src/components/` | Hero / ProductCard / LogTimeline / CapabilityList / CTA / SubscribeForm / Seo |
-| `src/lib/` | 打分、事件名、SEO、i18n 纯函数 |
+| `src/components/` | Hero / ProductCard / LogTimeline / CapabilityList / CTA / Nav / Footer / SubscribeForm / StaticPage / Seo(M4) |
+| `src/lib/` | constants（常量/过滤/日期）、evidence（构建期证据链解析）、queries（集中查询）、打分/事件名/SEO/i18n 纯函数(M4/M6) |
 | `functions/api/` | R1 方案 A 留空；R1.5/B 方案才启用 |
 | `scripts/` | 新建日志、周更汇总、全量导出 |
 | `public/` | favicon、robots.txt |

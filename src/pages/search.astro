@@ -1,0 +1,22 @@
+---
+/**
+ * 站内搜索（M3 占位）。M4 接入 Pagefind：构建后生成 dist/pagefind/，
+ * 这里嵌入一个无服务端、零常驻 JS 的搜索 UI（脚本按需加载）。
+ * 当前先给出可导航的说明，避免 M3 阶段出现死链。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="搜索 · Atelier" description="在作品与创作记录中查找" currentPath="/search">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">搜索</h1>
+    <p class="mt-2 opacity-80">
+      站内搜索会在下一个里程碑接入（构建期静态索引，不需要服务端）。
+    </p>
+    <p class="mt-6 text-sm">
+      在此之前，可以直接浏览 <a href="/products" class="underline">作品</a>、
+      <a href="/log" class="underline">创作日志</a> 与
+      <a href="/capabilities" class="underline">能力</a>。
+    </p>
+  </div>
+</BaseLayout>

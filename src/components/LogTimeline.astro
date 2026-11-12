@@ -1,0 +1,54 @@
+---
+/**
+ * 创作日志时间线（L2/L3）。按日期倒序，每条只露：类型徽标、日期、标题、摘要。
+ * 正文与「读 100%」的深度消费留在 /log/[id] 详情页。
+ */
+import { KIND_LABEL, formatDate } from '../lib/constants';
+
+interface LogItem {
+  id: string;
+  title: string;
+  summary: string;
+  kind: string;
+  publishedAt: Date;
+}
+
+interface Props {
+  items: LogItem[];
+  /** 为真时每条都渲染，用于 /log 全量列表；首页只传前 3 条 */
+  showAll?: boolean;
+}
+
+const { items, showAll = false } = Astro.props;
+---
+
+<ol class="relative space-y-6 border-l border-neutral-300 pl-6 dark:border-neutral-700">
+  {
+    items.map((item) => (
+      <li class="relative">
+        <span
+          class="absolute -left-[1.6rem] top-2 h-2.5 w-2.5 rounded-full bg-neutral-500"
+          aria-hidden="true"
+        />
+        <div class="flex flex-wrap items-baseline gap-x-3 text-sm opacity-70">
+          <time datetime={item.publishedAt.toISOString()}>{formatDate(item.publishedAt)}</time>
+          <span class="rounded border border-neutral-400 px-1.5 py-0.5 text-xs dark:border-neutral-600">
+            {KIND_LABEL[item.kind] ?? item.kind}
+          </span>
+        </div>
+        <h3 class="mt-1 text-base font-semibold">
+          <a href={`/log/${item.id}`} class="no-underline hover:underline">{item.title}</a>
+        </h3>
+        <p class="mt-1 text-sm opacity-85">{item.summary}</p>
+      </li>
+    ))
+  }
+</ol>
+
+{
+  !showAll && items.length > 0 && (
+    <p class="mt-6 text-sm">
+      <a href="/log" class="underline">查看全部创作日志 →</a>
+    </p>
+  )
+}

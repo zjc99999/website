@@ -1,0 +1,8 @@
+---
+import StaticPage from '../components/StaticPage.astro';
+import { getPage } from '../lib/queries';
+const entry = await getPage('now');
+if (!entry) throw new Error('[content] 缺少 pages 集合中的 now 内容');
+---
+
+<StaticPage entry={entry} currentPath="/about" />

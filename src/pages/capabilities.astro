@@ -1,0 +1,48 @@
+---
+/**
+ * 能力页（L3）。每条能力 = 一句陈述 + 已验证证据链接。
+ * 与首页一样在构建期调用 resolveEvidenceList；任一坏 id 会让 build 失败。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCapabilities } from '../lib/queries';
+import { resolveEvidenceList } from '../lib/evidence';
+
+const capabilities = await getCapabilities();
+const items = await Promise.all(
+  capabilities.map(async (c) => ({
+    id: c.id,
+    category: c.data.category,
+    statement: c.data.statement,
+    evidence: await resolveEvidenceList(c.data.evidence_ids),
+  })),
+);
+---
+
+<BaseLayout title="能力 · Atelier" description="我能做什么，以及凭什么这么说" currentPath="/capabilities">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">能力</h1>
+    <p class="mt-2 opacity-80">
+      不放技能标签云。每条能力后面都跟着具体作品或日志，点开就能自己判断。
+    </p>
+
+    <ul class="mt-10 space-y-10">
+      {
+        items.map((cap) => (
+          <li id={cap.id}>
+            <p class="text-xs font-medium uppercase tracking-wide opacity-60">{cap.category}</p>
+            <p class="mt-1 text-lg">{cap.statement}</p>
+            <ul class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              {cap.evidence.map((e) => (
+                <li>
+                  <a href={e.href} class="underline">证据：{e.label} →</a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))
+      }
+    </ul>
+
+    {items.length === 0 && <p class="mt-8 opacity-70">还没有公开的能力条目。</p>}
+  </div>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+/** 作品列表（L3）。状态标签 + 一句话 tagline，全部结构化，无长段落。 */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getProducts } from '../../lib/queries';
+
+const products = await getProducts();
+---
+
+<BaseLayout title="作品 · Atelier" description="我做过的、正在做的、以及已经归档的产品" currentPath="/products">
+  <div class="mx-auto max-w-3xl px-6 py-12">
+    <h1 class="text-3xl font-semibold">作品</h1>
+    <p class="mt-2 opacity-80">状态如实标出：想法中 / 开发中 / 已上线 / 已归档。</p>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+      {products.map((p) => (
+        <ProductCard
+          id={p.id}
+          title={p.data.title}
+          tagline={p.data.tagline}
+          stage={p.data.stage}
+          url={p.data.url}
+          repoUrl={p.data.repo_url}
+          launchDate={p.data.launch_date}
+          metrics={p.data.metrics}
+        />
+      ))}
+    </div>
+
+    {products.length === 0 && <p class="mt-8 opacity-70">还没有公开的作品。</p>}
+  </div>
+</BaseLayout>
