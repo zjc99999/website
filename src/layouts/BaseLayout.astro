@@ -1,0 +1,42 @@
+---
+/**
+ * 全站基础布局。M1 只提供语义骨架与 SEO 占位；
+ * M4 接入 Seo.astro 组件（meta/OG/结构化数据/canonical）。
+ *
+ * Astro 7 模板纪律（规划书 EX-2 / D2）：
+ *  - Rust 编译器是唯一编译器，标签必须严格闭合，不依赖自动纠错；
+ *  - compressHTML 已显式设回 true（见 astro.config.mjs）。
+ */
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Atelier · 造物间',
+  description = '以作品为证据、以创作过程建立信任的独立开发者主页',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body>
+    <a href="#main" class="sr-only focus:not-sr-only">跳到正文</a>
+    <slot name="nav" />
+    <main id="main">
+      <slot />
+    </main>
+    <slot name="footer" />
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "_comment": "首屏唯一数据源。M1 为占位值；M8 由本人替换为真实身份/价值主张。字段对齐概要设计 5.3 profile 实体。",
+  "name": "独立开发者",
+  "headline": "我是一名独立开发者",
+  "value_proposition": "我做能用、能交付的产品，也把过程写下来给你看",
+  "availability": "开放合作",
+  "location": "",
+  "contact_channels": [],
+  "socials": []
+}

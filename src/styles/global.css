@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Tailwind 4 CSS-first：本项目不生成 tailwind.config.*，主题/断点一律在此用
+   @theme / 原生 CSS 定义。见 docs/项目设计与实现规划书.md D3。 */
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+/* 减少动效偏好（a11y，概要设计 5.7） */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
