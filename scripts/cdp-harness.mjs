@@ -44,9 +44,37 @@ const MIME = {
  * 起一个本地静态服务器。state.root 可在构建完成后替换（先拿端口、再换产物目录），
  * 这样表单端点 URL 能在构建期就写死成同一个 origin，避免用固定端口。
  * onPost(reqLike) 可选：收到任意 POST 时调用并返回一页「已收到」。
+ *
+ * headersFile（M6-e）：指向 dist/_headers，解析 Cloudflare Pages 风格的
+ * `/*` 通配段，把里面的响应头真实地加到每个响应上——这样 Playwright 测到的
+ * 是「CSP 真的随 HTML 一起发出来了」，而不只是某个文件里写着一行文本。
+ * 只会解析 `/*` 段（本项目只用这一段），其余段忽略。
  */
-export async function startServer({ root, onPost } = {}) {
+async function readHeaders(headersFile) {
+  if (!headersFile) return {};
+  try {
+    const text = await readFile(headersFile, 'utf8');
+    const out = {};
+    let active = false;
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      if (line.startsWith('/')) { active = line === '/*'; continue; }
+      if (!active) continue;
+      const i = line.indexOf(':');
+      if (i > 0) out[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export async function startServer({ root, onPost, port = 0, headersFile } = {}) {
   const state = { root: resolve(root ?? ROOT) };
+  const extraHeaders = await readHeaders(headersFile);
+  /** 每个响应都带上 _headers 里声明的头；具体 Content-Type 覆盖同名项。 */
+  const H = (base) => ({ ...extraHeaders, ...base });
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === 'POST' && onPost) {
@@ -54,7 +82,7 @@ export async function startServer({ root, onPost } = {}) {
         for await (const c of req) chunks.push(c);
         const body = Buffer.concat(chunks).toString('utf8');
         onPost({ url: req.url, headers: req.headers, body });
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, H({ 'Content-Type': 'text/html; charset=utf-8' }));
         res.end(
           '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>已收到</title><p>谢谢，已收到。</p></html>',
         );
@@ -77,26 +105,26 @@ export async function startServer({ root, onPost } = {}) {
       if (!extname(file)) {
         try {
           const asFile = await readFile(file);
-          res.writeHead(200, {
+          res.writeHead(200, H({
             'Content-Type': MIME[extname(file)] ?? 'application/octet-stream',
             'Cache-Control': 'no-store',
-          });
+          }));
           return res.end(asFile);
         } catch {
           file = resolve(file, 'index.html');
         }
       }
       const data = await readFile(file);
-      res.writeHead(200, {
+      res.writeHead(200, H({
         'Content-Type': MIME[extname(file)] ?? 'application/octet-stream',
         'Cache-Control': 'no-store',
-      });
+      }));
       res.end(data);
     } catch {
       res.writeHead(404).end('not found');
     }
   });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  await new Promise((r) => server.listen(port, '127.0.0.1', r));
   return { server, state, base: `http://127.0.0.1:${server.address().port}` };
 }
 
@@ -237,7 +265,10 @@ export async function launchChrome() {
     }
   };
 
-  return { send, evaluate, on, close, chrome };
+  // M6：把 Chrome 的调试端口也暴露出去。Lighthouse 的程序式 API 通过
+  // puppeteer.connect({browserURL: `http://127.0.0.1:${port}`}) 复用这个已运行的 Chrome，
+  // 不需要 chrome-launcher（CLI 专有），也不重复起进程。
+  return { send, evaluate, on, close, chrome, port };
 }
 
 /** 导航并等待 document.readyState === 'complete' 且 URL 已切换。 */

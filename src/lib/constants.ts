@@ -65,9 +65,16 @@ export const COLLECTIONS: Record<string, CollectionKey> = {
 /**
  * 生产环境内容过滤：草稿与私有内容不出现在产物里（5.3）。
  * 用法：getCollection('log', isPublicProd) —— 注意返回布尔而非集合。
+ *
+ * M6：第二个参数是可选的「是否生产环境」，默认取 import.meta.env.PROD。
+ * 显式传参让这条纯谓词可以在 vitest 里确定性地覆盖两个分支，
+ * 而不必依赖测试运行器的 mode（页面调用点仍走默认值，行为不变）。
  */
-export function isPublicProd({ data }: { data: { status: string; visibility: string } }) {
-  return import.meta.env.PROD ? data.status === 'published' && data.visibility !== 'private' : true;
+export function isPublicProd(
+  { data }: { data: { status: string; visibility: string } },
+  isProd: boolean = import.meta.env.PROD,
+) {
+  return isProd ? data.status === 'published' && data.visibility !== 'private' : true;
 }
 
 /** 日期本地化（zh-CN，5.7 i18n 骨架） */

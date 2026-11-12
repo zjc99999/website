@@ -9,6 +9,10 @@
  *  - UI 全局名与构造参数已实测核验（dist/pagefind/pagefind-ui.js 末尾 window.PagefindUI=...）；
  *  - dev 模式下 dist/pagefind 不存在 → 脚本加载失败时保留可读的降级说明，不留死链；
  *  - 搜索容器 data-pagefind-ignore，避免把空 UI 自身索引进去。
+ *
+ * CSP（M6-e）：本页是全站唯一的内联可执行脚本，构建期把源码 sha256 登记到
+ * public/_headers（scripts/csp-check.mjs）；改动这里必须重新生成，否则 CSP 会拦掉它。
+ * 脚本内容刻意保持同步、无外部依赖、无 eval。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---

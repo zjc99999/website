@@ -1,0 +1,95 @@
+# M6：一条命令可复现的全量质量检查（等价于 `pnpm run quality` + `pnpm run quality:browser`）。
+#
+# 四段串行，前一段红就不进下一段（延续概要设计 5.8 的门禁思想）：
+#   verify → quality → browser → audit
+# 与本地 `pnpm run quality` / `quality:browser` 跑的是同一组脚本，CI 不另搞一套
+# 「只在 CI 里绿」的断言；`verify-ci.mjs` 还会检查这条链本身没漏脚本。
+#
+# 说明：
+#  - Windows runner 是因为本机 Chrome / DSH bundled Node 都在这里；Linux 上跑
+#    只需把 NODE/PNPM 换成 `node`/`pnpm`、CHROME 换成系统路径即可（脚本全跨平台）。
+#  - 不下载 Playwright 浏览器：复用系统 Chrome（CHROME_PATH / PW_CHROME）。
+#  - 不落任何密钥：CSP/_headers 由产物生成，.env.example 只是空模板。
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # DSH workspace 自带的 Node / pnpm（精确锁版本 11.28.5），避免 CI 里的版本漂移。
+  NODE: D:\Ai\dsh-data\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe
+  PNPM: D:\Ai\dsh-data\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.mjs
+  CHROME_PATH: C:\Program Files\Google\Chrome\Application\chrome.exe
+  PW_CHROME: C:\Program Files\Google\Chrome\Application\chrome.exe
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+  ASTRO_TELEMETRY_DISABLED: '1'
+
+jobs:
+  verify:
+    name: 1/4 依赖与静态检查
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装依赖（frozen lockfile）
+        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+      - name: 类型与构建期校验
+        run: '& $env:NODE $env:PNPM test'
+
+  quality:
+    name: 2/4 构建与硬规则（含故意破坏必红）
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装依赖
+        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+      - name: 构建 + CSP 生成 + 全量质量
+        run: '& $env:NODE $env:PNPM run quality'
+      - name: 上传构建产物（供后续 job 与人工预览）
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  browser:
+    name: 3/4 真实浏览器回归
+    needs: quality
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装依赖
+        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+      - name: 取回构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: E2E（性能 / 搜索 / 线索 / 拔动态层 / Playwright / Lighthouse / axe）
+        run: '& $env:NODE $env:PNPM run quality:browser'
+
+  audit:
+    name: 4/4 密钥与产物 hygiene
+    needs: browser
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 确认没有密钥被提交
+        shell: pwsh
+        run: |
+          $bad = git ls-files | Where-Object { $_ -match '(^|/)\.env($|\.)' -and $_ -ne '.env.example' }
+          if ($bad) { Write-Error "发现被跟踪的 .env 文件：$($bad -join ', ')"; exit 1 }
+          # 扫描已跟踪文件中的 RESEND_API_KEY / 私钥类文本（只查非空值）
+          $hits = git grep -n -E '(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' -- . ':!*.lock' 2>$null
+          if ($hits) { Write-Error "疑似密钥进入仓库：`n$hits"; exit 1 }
+          Write-Host 'OK：无 .env 文件、无密钥字面量入库'

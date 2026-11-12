@@ -17,9 +17,15 @@ interface Props {
   items: LogItem[];
   /** 为真时每条都渲染，用于 /log 全量列表；首页只传前 3 条 */
   showAll?: boolean;
+  /**
+   * 条目标题级别（M6 / axe heading-order）。首页嵌在 <h2> 分区里 → h3；
+   * /log 列表页直接挂在 <h1> 下 → h2，避免跳级。
+   */
+  headingLevel?: 'h2' | 'h3';
 }
 
-const { items, showAll = false } = Astro.props;
+const { items, showAll = false, headingLevel = 'h3' } = Astro.props;
+const Heading = headingLevel;
 ---
 
 <ol class="relative space-y-6 border-l border-neutral-300 pl-6 dark:border-neutral-700">
@@ -36,9 +42,9 @@ const { items, showAll = false } = Astro.props;
             {KIND_LABEL[item.kind] ?? item.kind}
           </span>
         </div>
-        <h3 class="mt-1 text-base font-semibold">
+        <Heading class="mt-1 text-base font-semibold">
           <a href={`/log/${item.id}`} class="no-underline hover:underline">{item.title}</a>
-        </h3>
+        </Heading>
         <p class="mt-1 text-sm opacity-85">{item.summary}</p>
       </li>
     ))

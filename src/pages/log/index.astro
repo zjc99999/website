@@ -17,6 +17,7 @@ const logs = await getLogs();
     <div class="mt-8">
       <LogTimeline
         showAll
+        headingLevel="h2"
         items={logs.map((l) => ({
           id: l.id,
           title: l.data.title,

@@ -1,0 +1,32 @@
+# M6：依赖安全更新。本项目刻意锁死精确版本（见规划书 §2.2 / README「禁止 pnpm update」），
+# 所以 Dependabot 只「提 PR 报告」，不自动合并；任何升级都要由人复核 peer 兼容性
+# （typescript 必须停在 6.0.3，@astrojs/check 不接受 TS7）后手动合入。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    groups:
+      # 把同一生态的补丁升级合成一个 PR，减少噪音
+      astro:
+        patterns: ["astro", "@astrojs/*", "@tailwindcss/*", "tailwindcss"]
+      test-tooling:
+        patterns: ["vitest", "@playwright/test", "lighthouse", "axe-core", "pagefind"]
+    ignore:
+      # TS 7 会破坏 @astrojs/check（peer 只接受 ^5 || ^6）；只在人工确认后升级
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels: ["dependencies", "ci"]
