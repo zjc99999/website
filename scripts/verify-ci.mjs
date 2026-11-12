@@ -65,11 +65,15 @@ try { tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' 
 const envFiles = tracked.filter((f) => /(^|\/)\.env($|\.)/.test(f) && f !== '.env.example');
 check('无 .env 文件入库', envFiles.length === 0, envFiles.join(',') || 'ok');
 const secretRe = /(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
+// 这两个文件本身就写着这条检测规则（M6 提交后它们变成 tracked，曾导致自匹配假红）：
+// 它们是「检测器」，不是「藏密钥的地方」，必须排除，否则规则永远对自己报警。
+const detectorFiles = new Set(['.github/workflows/ci.yml', 'scripts/verify-ci.mjs']);
 const withSecret = tracked.filter((f) => {
+  if (detectorFiles.has(f)) return false;
   if (!existsSync(join(ROOT, f))) return false;
   try { return secretRe.test(readFileSync(join(ROOT, f), 'utf8')); } catch { return false; }
 });
-check('无密钥字面量入库', withSecret.length === 0, withSecret.join(',') || 'ok');
+check('无密钥字面量入库（排除检测器自身）', withSecret.length === 0, withSecret.join(',') || 'ok');
 
 // 6. 关键文件存在
 for (const f of ['public/_headers', '.github/dependabot.yml', 'playwright.config.ts', 'vitest.config.ts']) {

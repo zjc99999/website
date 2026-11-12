@@ -43,6 +43,8 @@ pnpm test:axe         # axe-core 5 个页面 a11y violations（实测 0）
 pnpm test:csp         # 由产物生成严格 CSP → public/_headers + dist/_headers（含漂移检测）
 pnpm verify:ci        # 检查 quality 链没漏脚本、ci.yml 完整、密钥未入库
 pnpm serve            # 本地静态预览（会把 CSP 作为真实响应头发出，默认 4321）
+pnpm deploy:smoke     # 部署前冒烟：本地托管 dist/，验 11 页 + feed + sitemap + Pagefind + 真 CSP 头
+pnpm deploy:smoke:remote https://真实域名   # 部署/回滚后对线上 URL 跑同一套消费端检查
 pnpm pagefind         # 单独重建 dist/pagefind 索引
 pnpm make:cover       # 重新生成示例占位封面（零依赖 Node 手写 PNG）
 ```
@@ -85,8 +87,11 @@ pnpm new:log "给首页做了 3 秒测试"
 | `scripts/{csp-policy,csp-check,audit-csp}.mjs` | 严格 CSP 纯函数 / 由 dist 生成并校验 `_headers` / 只读产物审计 |
 | `scripts/{lh-check,axe-check}.mjs` | Lighthouse 13 四类分数、axe-core a11y 回归（复用 cdp-harness 的 Chrome 调试端口） |
 | `scripts/{serve,verify-ci}.mjs` | 带 CSP 头的本地静态服务器 / CI 链完整性与密钥 hygiene 自检 |
+| `scripts/find-chrome.mjs` | 跨平台 Chrome/Chromium 定位（`CHROME_PATH`/`PW_CHROME` 覆盖 → 平台绝对路径 → PATH 扫描），CDP 与 Playwright 共用 |
+| `scripts/deploy-smoke.mjs` | 部署前/后消费端冒烟（本地 dist 或线上 URL） |
 | `tests/` | vitest 单测（`*.test.ts`）+ stub + Playwright E2E（`e2e/site.spec.ts`） |
-| `.github/workflows/ci.yml` | verify → quality → browser → audit 四段串行门禁 |
+| `docs/部署与回滚演练.md` | M7 部署清单、发布→回滚→再发布演练签字表、国内/第三方实测表 |
+| `.github/workflows/ci.yml` | `ubuntu-latest` 标准写法：verify → quality → browser → audit 四段串行门禁 |
 | `.github/dependabot.yml` | 依赖更新报告（只提 PR、禁止自动合并；忽略 typescript 主版本升级） |
 | `public/_headers` | 由 `test:csp` 生成的严格 CSP + 安全响应头（入库，部署平台直接消费） |
 | `functions/api/` | R1 方案 A 留空；R1.5/B 方案才启用 |

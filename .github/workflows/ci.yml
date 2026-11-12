@@ -1,15 +1,26 @@
-# M6：一条命令可复现的全量质量检查（等价于 `pnpm run quality` + `pnpm run quality:browser`）。
+# M6 建立、M7 准备阶段改成「标准 GitHub Actions」的全量质量检查。
 #
 # 四段串行，前一段红就不进下一段（延续概要设计 5.8 的门禁思想）：
 #   verify → quality → browser → audit
 # 与本地 `pnpm run quality` / `quality:browser` 跑的是同一组脚本，CI 不另搞一套
-# 「只在 CI 里绿」的断言；`verify-ci.mjs` 还会检查这条链本身没漏脚本。
+# 「只在 CI 里绿」的断言；`scripts/verify-ci.mjs` 还会检查这条链本身没漏脚本。
+#
+# M7 改动（与旧版的区别）：
+#  - 旧版把 NODE / PNPM / CHROME 写死成「DSH 本机 Windows 专用路径」，那在本机
+#    能跑，但在 GitHub 托管 runner 上根本不存在，是「本地绿、远端必红」的假 CI。
+#  - 现改为 ubuntu-latest + actions/setup-node + pnpm/action-setup（版本取自
+#    package.json 的 packageManager / engines），浏览器由 scripts/find-chrome.mjs
+#    按平台探测（GitHub ubuntu-latest 预装 google-chrome-stable），结果写入
+#    CHROME_PATH / PW_CHROME 供所有脚本与 playwright.config.ts 共用。
+#  - .npmrc 已平台中立化（不再写死 D:\.pnpm-store），pnpm 会自行选同卷 store。
+#  - 密钥审计显式排除「检测器自身」两个文件，否则规则会对自己报警（假红）。
 #
 # 说明：
-#  - Windows runner 是因为本机 Chrome / DSH bundled Node 都在这里；Linux 上跑
-#    只需把 NODE/PNPM 换成 `node`/`pnpm`、CHROME 换成系统路径即可（脚本全跨平台）。
-#  - 不下载 Playwright 浏览器：复用系统 Chrome（CHROME_PATH / PW_CHROME）。
+#  - 不下载 Playwright 浏览器：安装时 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1，
+#    @playwright/test 本身也没有 postinstall；复用系统 Chrome 或 CHROME_PATH。
 #  - 不落任何密钥：CSP/_headers 由产物生成，.env.example 只是空模板。
+#  - 部署 job 刻意**尚未加入**：它需要真实域名 / 平台账号 / 远端仓库（M7 待提供
+#    清单 ⑤⑥⑧⑨），拿到后再在 audit 之后追加；当前 CI 到「产物可交付」为止。
 name: quality
 
 on:
@@ -26,35 +37,46 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # DSH workspace 自带的 Node / pnpm（精确锁版本 11.28.5），避免 CI 里的版本漂移。
-  NODE: D:\Ai\dsh-data\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe
-  PNPM: D:\Ai\dsh-data\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.mjs
-  CHROME_PATH: C:\Program Files\Google\Chrome\Application\chrome.exe
-  PW_CHROME: C:\Program Files\Google\Chrome\Application\chrome.exe
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
   ASTRO_TELEMETRY_DISABLED: '1'
 
 jobs:
   verify:
     name: 1/4 依赖与静态检查
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
       - name: 安装依赖（frozen lockfile）
-        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+        run: pnpm install --frozen-lockfile
       - name: 类型与构建期校验
-        run: '& $env:NODE $env:PNPM test'
+        run: pnpm test
 
   quality:
     name: 2/4 构建与硬规则（含故意破坏必红）
     needs: verify
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
       - name: 安装依赖
-        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+        run: pnpm install --frozen-lockfile
       - name: 构建 + CSP 生成 + 全量质量
-        run: '& $env:NODE $env:PNPM run quality'
+        run: pnpm run quality
       - name: 上传构建产物（供后续 job 与人工预览）
         uses: actions/upload-artifact@v4
         with:
@@ -65,31 +87,50 @@ jobs:
   browser:
     name: 3/4 真实浏览器回归
     needs: quality
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
       - name: 安装依赖
-        run: '& $env:NODE $env:PNPM install --frozen-lockfile'
+        run: pnpm install --frozen-lockfile
+      - name: 定位系统 Chrome（跨平台，写入 CHROME_PATH / PW_CHROME）
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(node scripts/find-chrome.mjs)"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          echo "PW_CHROME=$CHROME_PATH" >> "$GITHUB_ENV"
+          echo "使用浏览器：$CHROME_PATH"
       - name: 取回构建产物
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
       - name: E2E（性能 / 搜索 / 线索 / 拔动态层 / Playwright / Lighthouse / axe）
-        run: '& $env:NODE $env:PNPM run quality:browser'
+        run: pnpm run quality:browser
 
   audit:
     name: 4/4 密钥与产物 hygiene
     needs: browser
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: 确认没有密钥被提交
-        shell: pwsh
+        shell: bash
+        # 排除两个「检测器」文件：它们本身就写着这条正则，不排除会自匹配假红
+        # （scripts/verify-ci.mjs 里也做了同样的排除，两处保持一致）。
         run: |
-          $bad = git ls-files | Where-Object { $_ -match '(^|/)\.env($|\.)' -and $_ -ne '.env.example' }
-          if ($bad) { Write-Error "发现被跟踪的 .env 文件：$($bad -join ', ')"; exit 1 }
-          # 扫描已跟踪文件中的 RESEND_API_KEY / 私钥类文本（只查非空值）
-          $hits = git grep -n -E '(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' -- . ':!*.lock' 2>$null
-          if ($hits) { Write-Error "疑似密钥进入仓库：`n$hits"; exit 1 }
-          Write-Host 'OK：无 .env 文件、无密钥字面量入库'
+          set -euo pipefail
+          bad=$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '^\.env\.example$' || true)
+          if [ -n "$bad" ]; then echo "发现被跟踪的 .env 文件：$bad"; exit 1; fi
+          hits=$(git grep -n -E '(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
+            -- . ':!*.lock' ':!.github/workflows/ci.yml' ':!scripts/verify-ci.mjs' || true)
+          if [ -n "$hits" ]; then echo "疑似密钥进入仓库："; echo "$hits"; exit 1; fi
+          echo 'OK：无 .env 文件、无密钥字面量入库'

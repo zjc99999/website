@@ -16,12 +16,11 @@ import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findChrome } from './find-chrome.mjs';
 
 export const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 export const ASTRO_CLI = resolve(ROOT, 'node_modules', 'astro', 'bin', 'astro.mjs');
 export const NODE = process.execPath;
-export const CHROME =
-  process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const MIME = {
@@ -166,7 +165,7 @@ export function buildProbe({ outDir, env = {}, echo = false }) {
 export async function launchChrome() {
   const userDataDir = await mkdtemp(join(tmpdir(), 'atelier-cdp-'));
   const chrome = spawn(
-    CHROME,
+    findChrome(),
     [
       '--headless=new',
       '--no-sandbox',

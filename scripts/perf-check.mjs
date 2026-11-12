@@ -22,11 +22,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { findChrome } from './find-chrome.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = resolve(ROOT, 'dist');
-const CHROME =
-  process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -109,7 +108,7 @@ async function firstScreenBytes() {
 // ---------- 3) CDP over 原生 WebSocket ----------
 const userDataDir = await mkdtemp(join(tmpdir(), 'atelier-perf-'));
 const chrome = spawn(
-  CHROME,
+  findChrome(),
   [
     '--headless=new',
     '--no-sandbox',
@@ -138,7 +137,7 @@ try {
     }
     await sleep(100);
   }
-  if (!port) throw new Error('Chrome 未暴露 DevToolsActivePort（检查 CHROME_PATH 与无头启动参数）');
+  if (!port) throw new Error('Chrome 未暴露 DevToolsActivePort（检查 CHROME_PATH / findChrome 探测结果与无头启动参数）');
 
   const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
   const page = targets.find((t) => t.type === 'page') ?? targets[0];
@@ -246,5 +245,5 @@ try {
   await sleep(300);
   try { await rm(userDataDir, { recursive: true, force: true }); } catch { /* ignore */ }
   server.close();
-  if (!chromeReady) console.error('提示：可用 CHROME_PATH 指定本机 chrome.exe 路径。');
+  if (!chromeReady) console.error('提示：可用 CHROME_PATH 指定 Chrome/Chromium 可执行文件（或检查 PATH 中是否有 google-chrome / chromium）。');
 }

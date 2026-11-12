@@ -18,11 +18,10 @@ import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findChrome } from './find-chrome.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = resolve(ROOT, 'dist');
-const CHROME =
-  process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -61,7 +60,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 
 const userDataDir = await mkdtemp(join(tmpdir(), 'atelier-search-'));
 const chrome = spawn(
-  CHROME,
+  findChrome(),
   [
     '--headless=new',
     '--no-sandbox',

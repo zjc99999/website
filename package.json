@@ -20,6 +20,8 @@
     "test:csp": "node scripts/csp-check.mjs",
     "test:pw": "playwright test",
     "serve": "node scripts/serve.mjs",
+    "deploy:smoke": "node scripts/deploy-smoke.mjs",
+    "deploy:smoke:remote": "node scripts/deploy-smoke.mjs",
     "test:perf": "node scripts/perf-check.mjs",
     "test:search": "node scripts/verify-search.mjs",
     "test:lead": "node scripts/verify-lead.mjs",
