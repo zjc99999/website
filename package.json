@@ -12,6 +12,7 @@
     "new:log": "node scripts/new-log.mjs",
     "changelog": "node scripts/changelog.mjs",
     "export:all": "node scripts/export-all.mjs",
+    "test:rules": "node scripts/verify-hard-rules.mjs",
     "test": "vitest run"
   },
   "dependencies": {

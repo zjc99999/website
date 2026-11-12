@@ -25,6 +25,9 @@ pnpm preview          # 预览构建产物
 pnpm check            # astro check（TS 类型 + Astro 模板校验）
 pnpm sync             # 生成 .astro/ 类型（内容集合变更后跑）
 pnpm new:log          # 2 分钟新建一条创作日志（M2 起可用）
+pnpm changelog        # 汇总最近 7 天已发布日志 → exports/ 周报草稿（--all 全部）
+pnpm export:all       # 导出全量明文内容 + 订阅者 CSV 模板 → exports/
+pnpm test:rules       # 验证两条构建期硬校验（E4）被违反时 build 必须失败（M2 起）
 pnpm test             # Vitest（M6 起可用）
 ```
 
@@ -32,19 +35,23 @@ pnpm test             # Vitest（M6 起可用）
 
 ```bash
 pnpm new:log "给首页做了 3 秒测试"
-# 交互式选类型（build-log / decision / changelog / note / retro / now）
+# 终端里交互式选类型（build-log / decision / changelog / note / retro / now）
+# 非交互 / CI / 脚本：pnpm new:log "标题" --kind=decision --summary="摘要"
 # 生成 src/content/log/YYYY-MM-DD-slug.md，填完直接 git push
 ```
 
 手工写也行：在 `src/content/log/` 新建 `.md`，frontmatter 至少含
-`title`、`summary`、`kind`、`status`、`published_at`、`workspace_id`、`owner_member_id`；
+`title`、`summary`、`kind`、`status`、`published_at`；
+`workspace_id` / `owner_member_id` 有默认值（`atelier` / `me`），可不写，避免每次手写。
 字段定义见 `src/content.config.ts`（schema 即文档）。构建期 Zod 校验会拦住不合规内容。
+注意：**可选字段留空时直接省略整行**（写 `repo_url:` 空值会被 YAML 解析成 null 而报错）。
 
 ## 怎么加一个作品
 
 在 `src/content/products/` 新建 `.mdx`，按同目录已有文件的 frontmatter 填写；
-`status` 取 `idea | building | live | archived`，`featured: true` 才会进首页「精选作品 ≤3」。
-能力必须挂 `evidence_ids`（无证据的能力不允许发布）。
+阶段字段是 `stage`（取 `idea | building | live | archived`，默认 `building`），
+`featured: true` 才会进首页「精选作品 ≤3」。
+能力必须挂 `evidence_ids`（无证据的能力不允许发布）；案例必须 `consent: true`（未授权客户信息不公开）。
 
 ## 目录速查
 

@@ -1,0 +1,33 @@
+---
+title: Atelier / 造物间
+summary: 一个先自用、以作品为证据、以创作过程建立信任的独立开发者主页
+tagline: 把过程写下来，让作品自己说话
+stage: live
+featured: true
+order: 1
+published_at: 2026-11-12
+status: published
+visibility: public
+tags: [独立开发, Astro, 内容站点]
+locale: zh-CN
+url: https://atelier.example.com
+launch_date: 2026-11-12
+metrics:
+  stack: Astro 7 + TypeScript + Tailwind 4
+  first_screen_js_kb: 0
+---
+
+## 这是什么
+
+一个给自己用的平台：记录从想法到上线的全过程，同时让普通访问者在 3 秒内看懂「我是谁、做什么、能帮我什么、下一步点哪」。
+
+## 为什么先自用
+
+先 dogfooding，跑通「写一条 100 字记录 → push → 上线」的写作流，再谈产品化。
+把简单逻辑放在前面，复杂的一切等真的需要时再加。
+
+## 设计上的取舍
+
+- **读路径全静态**：内容是 Git 里的明文 Markdown/MDX，构建成纯 HTML；表单/分析等动态层全部宕机，网站照样能读。
+- **能力必须挂证据**：不写「精通 XX」的技能标签云，每条能力都链接到具体作品或日志。
+- **组织化字段当天就埋**：`workspace_id` / `owner_member_id` 从第一条内容就存在，将来组团队不用改语义。

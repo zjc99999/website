@@ -9,7 +9,9 @@
  * 注意：M1 不引入任何客户端 JS（E7 首屏 JS ≤50KB）。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import profile from '../content/profile.json';
+import { getEntry } from 'astro:content';
+
+const profile = (await getEntry('profile', 'me'))!.data;
 ---
 
 <BaseLayout>
@@ -24,8 +26,8 @@ import profile from '../content/profile.json';
   <!-- L1 / 3 秒层：不滚动即回答「你是谁 / 做什么 / 能帮我什么 / 下一步点哪」 -->
   <section class="mx-auto max-w-3xl px-6 py-16">
     <p class="text-sm opacity-70">{profile.availability}</p>
-    <h1 class="mt-3 text-3xl font-semibold tracking-tight">{profile.name}</h1>
-    <p class="mt-3 text-xl">{profile.value_proposition}</p>
+    <h1 class="mt-3 text-3xl font-semibold tracking-tight">{profile.headline}</h1>
+    <p class="mt-3 text-xl">{profile.value}</p>
 
     <div class="mt-8 flex flex-wrap gap-3">
       <a
