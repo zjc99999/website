@@ -1,0 +1,131 @@
+---
+/**
+ * SEO / 社交分享 / 结构化数据（M4）。
+ *
+ * 核验依据（避免重蹈 reference() 的「看起来被保证了」覆辙）：
+ *  - site 来自 astro.config.mjs，Astro.site 是绝对 URL，可安全构造 canonical / og:url；
+ *  - image() schema helper 解析出的封面形如 { src, width, height, format }，
+ *    src 是 /_astro/... 根相对路径，OG 必须转绝对 URL（社交平台不解析相对路径）；
+ *  - JSON-LD 用 <script type="application/ld+json" is:inline>，Astro 不打包、原样输出；
+ *  - RSS / JSON Feed 的 <link rel="alternate"> 做阅读器自动发现。
+ *
+ * 首屏预算不受影响：本组件只产出 <meta>/<link>/<script type=ld+json>，零客户端 JS。
+ */
+import { getEntry } from 'astro:content';
+import { SITE } from '../lib/constants';
+
+/** 与 image() schema helper 返回值的结构对齐（不依赖 astro 的 ImageMetadata 具体字段） */
+export interface SeoImage {
+  src: string;
+  width: number;
+  height: number;
+  format?: string;
+}
+
+export interface SeoProps {
+  title?: string;
+  description?: string;
+  /** 覆盖 canonical 路径，默认取当前 URL 的 pathname */
+  canonicalPath?: string;
+  type?: 'website' | 'article' | 'product';
+  image?: SeoImage | string;
+  publishedAt?: Date;
+  modifiedAt?: Date;
+  noindex?: boolean;
+  /** frontmatter 的 seo{title,description,og} 覆盖 */
+  seo?: { title?: string; description?: string; og?: string };
+}
+
+const {
+  title: rawTitle = SITE.defaultTitle,
+  description: rawDescription = SITE.defaultDescription,
+  canonicalPath = Astro.url.pathname,
+  type = 'website',
+  image,
+  publishedAt,
+  modifiedAt,
+  noindex = false,
+  seo,
+} = Astro.props;
+
+const title = seo?.title ?? rawTitle;
+const description = seo?.description ?? rawDescription;
+
+const site = Astro.site ?? new URL('https://atelier.example.com/');
+const canonical = new URL(canonicalPath, site).href;
+
+// og 优先级：frontmatter seo.og > 传入的 image() 元数据
+const imageMeta: SeoImage | undefined = typeof image === 'object' && image !== null ? image : undefined;
+const ogImageRaw = seo?.og ?? (typeof image === 'string' ? image : imageMeta?.src);
+const ogImage = ogImageRaw ? new URL(ogImageRaw, site).href : undefined;
+const ogImageWidth = imageMeta?.width;
+const ogImageHeight = imageMeta?.height;
+
+const profile = (await getEntry('profile', 'me'))!.data;
+const authorName = profile.name;
+
+// 结构化数据：全站 WebSite + Person；文章/作品页追加主实体
+const jsonLd: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${site.href}#website`,
+    url: site.href,
+    name: SITE.name,
+    description: SITE.defaultDescription,
+    inLanguage: SITE.locale,
+    publisher: { '@type': 'Person', name: authorName },
+  },
+];
+
+if (type === 'article' || type === 'product') {
+  const entity: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': type === 'article' ? 'BlogPosting' : 'CreativeWork',
+    '@id': `${canonical}#${type}`,
+    headline: title,
+    name: title,
+    description,
+    url: canonical,
+    inLanguage: SITE.locale,
+    author: { '@type': 'Person', name: authorName },
+    publisher: { '@type': 'Person', name: authorName },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+  };
+  if (publishedAt) entity.datePublished = publishedAt.toISOString();
+  if (modifiedAt) entity.dateModified = modifiedAt.toISOString();
+  if (ogImage) entity.image = ogImage;
+  jsonLd.push(entity);
+}
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="author" content={authorName} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Open Graph -->
+<meta property="og:type" content={type === 'website' ? 'website' : 'article'} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+{ogImageWidth && <meta property="og:image:width" content={String(ogImageWidth)} />}
+{ogImageHeight && <meta property="og:image:height" content={String(ogImageHeight)} />}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+<!-- 阅读器自动发现 -->
+<link rel="alternate" type="application/rss+xml" title={`${SITE.name} · RSS`} href="/rss.xml" />
+<link rel="alternate" type="application/feed+json" title={`${SITE.name} · JSON Feed`} href="/feed.json" />
+
+{jsonLd.map((ld) => (
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)}></script>
+))}

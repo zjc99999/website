@@ -12,8 +12,13 @@
     "new:log": "node scripts/new-log.mjs",
     "changelog": "node scripts/changelog.mjs",
     "export:all": "node scripts/export-all.mjs",
+    "test": "pnpm check && pnpm test:rules",
     "test:rules": "node scripts/verify-hard-rules.mjs",
-    "test": "vitest run"
+    "test:perf": "node scripts/perf-check.mjs",
+    "test:search": "node scripts/verify-search.mjs",
+    "test:e2e": "pnpm test:perf && pnpm test:search",
+    "pagefind": "node scripts/pagefind-index.mjs",
+    "make:cover": "node scripts/make-cover.mjs"
   },
   "dependencies": {
     "astro": "7.4.11",

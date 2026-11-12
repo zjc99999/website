@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /**
- * M2 DoD 自动化测试：两条构建期硬校验（规划书 E4）被违反时，astro build 必须失败。
+ * 构建期硬校验回归（规划书 E4，现共三条）：违反时 astro build 必须失败。
+ *   E4-a capability.evidence_ids 为空（M2）
+ *   E4-b case_study.consent 不为 true（M2）
+ *   E4-c capability 指向不存在的证据目标（M3，因 reference() 不做存在性校验而补）
  *
  * 做法：把一条故意违规的内容写入临时文件 → 跑 `astro build` → 断言退出码非 0
  *      且 stderr 含可读错误 → 删除临时文件 → 再跑一次 build 确认恢复正常。
@@ -14,7 +17,14 @@ import { spawnSync } from 'node:child_process';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const NODE = process.execPath;
-const PNPM = process.env.DSH_PNPM || 'pnpm';
+// 直接定位 Astro 的 CLI 入口（node_modules/astro/bin/astro.mjs，pnpm 符号链接可解析），
+// 而不是 `pnpm build`：本机 PATH 里没有裸 pnpm 命令，且 npm_execpath 不会透传到
+// 嵌套子进程。用 CLI 直跑 `astro build` 与 CI/pnpm build 生成的是同一套产物。
+const ASTRO_CLI = resolve(ROOT, 'node_modules', 'astro', 'bin', 'astro.mjs');
+if (!existsSync(ASTRO_CLI)) {
+  console.error(`✗ 找不到 Astro CLI：${ASTRO_CLI}（请先 pnpm install）`);
+  process.exit(1);
+}
 
 const CASES = [
   {
@@ -83,7 +93,7 @@ evidence_ids:
 ];
 
 const runBuild = () =>
-  spawnSync(NODE, [PNPM, 'build'], {
+  spawnSync(NODE, [ASTRO_CLI, 'build'], {
     cwd: ROOT,
     encoding: 'utf8',
     env: { ...process.env, ASTRO_TELEMETRY_DISABLED: '1' },
@@ -124,4 +134,4 @@ if (failed > 0) {
   console.error(`\n${failed} 项未通过`);
   process.exit(1);
 }
-console.log('\n全部通过：两条硬校验均被构建期拦截，且仓库可恢复。');
+console.log('\n全部通过：三条硬校验均被构建期拦截，且仓库可恢复。');

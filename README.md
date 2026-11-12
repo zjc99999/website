@@ -27,8 +27,13 @@ pnpm sync             # 生成 .astro/ 类型（内容集合变更后跑）
 pnpm new:log          # 2 分钟新建一条创作日志（M2 起可用）
 pnpm changelog        # 汇总最近 7 天已发布日志 → exports/ 周报草稿（--all 全部）
 pnpm export:all       # 导出全量明文内容 + 订阅者 CSV 模板 → exports/
-pnpm test:rules       # 验证三条构建期硬校验（E4-a/b/c）被违反时 build 必须失败（M2/M3 起）
-pnpm test             # Vitest（M6 起可用）
+pnpm test             # = pnpm check + pnpm test:rules（当前可用的全量回归）
+pnpm test:rules       # 验证三条构建期硬校验（E4-a/b/c）被违反时 build 必须失败
+pnpm test:perf        # G2 真实浏览器实测：LCP/CLS/首屏 JS（Slow 4G + CPU×4）
+pnpm test:search      # 真实浏览器验证 Pagefind 站内搜索能初始化并返回结果
+pnpm test:e2e         # = test:perf + test:search
+pnpm pagefind         # 单独重建 dist/pagefind 索引
+pnpm make:cover       # 重新生成示例占位封面（零依赖 Node 手写 PNG）
 ```
 
 ## 怎么加一条创作日志（M2 起）
@@ -63,15 +68,26 @@ pnpm new:log "给首页做了 3 秒测试"
 | `src/content/profile.json` | 首屏身份/价值主张的唯一数据源 |
 | `src/pages/` | 路由与静态生成 |
 | `src/components/` | Hero / ProductCard / LogTimeline / CapabilityList / CTA / Nav / Footer / SubscribeForm / StaticPage / Seo(M4) |
-| `src/lib/` | constants（常量/过滤/日期）、evidence（构建期证据链解析）、queries（集中查询）、打分/事件名/SEO/i18n 纯函数(M4/M6) |
+| `src/lib/` | constants（常量/过滤/日期）、evidence（构建期证据链解析）、queries（集中查询）、feeds（RSS/JSON Feed 共用取数） |
+| `src/pages/rss.xml.js`、`feed.json.js` | RSS 2.0（含全文 `content:encoded`）与 JSON Feed 1.1，共用 `getFeedItems()` |
 | `functions/api/` | R1 方案 A 留空；R1.5/B 方案才启用 |
-| `scripts/` | 新建日志、周更汇总、全量导出 |
+| `scripts/` | 新建日志、周更汇总、全量导出、硬校验回归、性能/搜索实测、封面生成 |
 | `public/` | favicon、robots.txt |
 
 ## 配置
 
 复制 `.env.example` 为 `.env` 并按需填写；**密钥绝不入库**。
-`astro.config.mjs` 里的 `site` 目前是占位域名，部署前换成真实自定义域名。
+`astro.config.mjs` 里的 `site` 目前是占位域名，部署前换成真实自定义域名——
+它会一处驱动 canonical、sitemap、OG、RSS、JSON Feed，无需逐个改。
+
+**图片**：作品 frontmatter 的 `cover` 用相对**内容文件**的路径（如
+`../../assets/atelier-cover.png`），由 Astro 的 `image()` schema helper 解析成
+`ImageMetadata`，构建期自动产出 WebP/AVIF 与 `srcset`，无需手动 import sharp。
+可选字段一律省略整行，不要写空值。
+
+**构建钩子**：`astro.config.mjs` 里的 `atelierPagefind` 集成在 `astro:build:done`
+生成 `dist/pagefind/`，所以**不要**把 `build` 改成 `astro build && ...`——
+E4 违规探针回归会因此被污染。`/search` 页已 `noindex` 并被 sitemap 的 `filter` 排除。
 
 ## 约束
 

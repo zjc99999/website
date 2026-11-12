@@ -19,7 +19,12 @@ const related = await getRelatedLogs(entry);
 const d = entry.data;
 ---
 
-<BaseLayout title={`${d.title} · 创作日志 · Atelier`} description={d.summary} currentPath="/log">
+<BaseLayout
+  title={`${d.title} · 创作日志 · Atelier`}
+  description={d.summary}
+  currentPath="/log"
+  seo={{ type: 'article', publishedAt: d.published_at, modifiedAt: d.updated_at, seo: d.seo }}
+>
   <article class="mx-auto max-w-3xl px-6 py-12">
     <p class="text-sm opacity-70"><a href="/log" class="underline">← 返回日志</a></p>
     <div class="mt-4 flex flex-wrap items-center gap-3 text-sm opacity-70">

@@ -1,22 +1,67 @@
 ---
 /**
- * 站内搜索（M3 占位）。M4 接入 Pagefind：构建后生成 dist/pagefind/，
- * 这里嵌入一个无服务端、零常驻 JS 的搜索 UI（脚本按需加载）。
- * 当前先给出可导航的说明，避免 M3 阶段出现死链。
+ * 站内搜索（M4 落地）。构建期由 astro.config.mjs 的 atelierPagefind 集成产出
+ * dist/pagefind/ 静态索引；本页按需加载 Pagefind UI（脚本/样式都在运行时动态插入，
+ * 用 is:inline 避免 Astro 在构建期解析还不存在的 /pagefind/ 路径）。
+ *
+ * 设计：
+ *  - 零服务端、零常驻 JS：只有访问 /search 才拉取脚本，不进首页首屏预算（E7）；
+ *  - UI 全局名与构造参数已实测核验（dist/pagefind/pagefind-ui.js 末尾 window.PagefindUI=...）；
+ *  - dev 模式下 dist/pagefind 不存在 → 脚本加载失败时保留可读的降级说明，不留死链；
+ *  - 搜索容器 data-pagefind-ignore，避免把空 UI 自身索引进去。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="搜索 · Atelier" description="在作品与创作记录中查找" currentPath="/search">
+<BaseLayout title="搜索 · Atelier" description="在作品、创作记录与能力中查找" currentPath="/search" seo={{ noindex: true }}>
   <div class="mx-auto max-w-3xl px-6 py-12">
     <h1 class="text-3xl font-semibold">搜索</h1>
-    <p class="mt-2 opacity-80">
-      站内搜索会在下一个里程碑接入（构建期静态索引，不需要服务端）。
-    </p>
-    <p class="mt-6 text-sm">
-      在此之前，可以直接浏览 <a href="/products" class="underline">作品</a>、
-      <a href="/log" class="underline">创作日志</a> 与
-      <a href="/capabilities" class="underline">能力</a>。
+    <p class="mt-2 opacity-80">输入关键词，在作品、创作记录与能力里查找。索引在每次构建时静态生成，不需要服务端。</p>
+
+    <div id="search" data-pagefind-ignore class="mt-8"></div>
+
+    <noscript>
+      <p class="mt-6 text-sm opacity-70">搜索需要 JavaScript。也可以直接浏览 <a href="/products" class="underline">作品</a>、<a href="/log" class="underline">创作日志</a> 与 <a href="/capabilities" class="underline">能力</a>。</p>
+    </noscript>
+    <p id="search-fallback" class="mt-6 hidden text-sm opacity-70">
+      搜索索引尚未生成（本地开发模式下正常）。可直接浏览 <a href="/products" class="underline">作品</a>、<a href="/log" class="underline">创作日志</a> 与 <a href="/capabilities" class="underline">能力</a>，或执行 <code>pnpm build</code> 生成索引后预览。
     </p>
   </div>
 </BaseLayout>
+
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+
+<script is:inline>
+  (function () {
+    var host = document.getElementById('search');
+    if (!host) return;
+
+    var script = document.createElement('script');
+    script.src = '/pagefind/pagefind-ui.js';
+    script.onload = function () {
+      if (typeof window.PagefindUI !== 'function') {
+        document.getElementById('search-fallback').classList.remove('hidden');
+        return;
+      }
+      new window.PagefindUI({
+        element: '#search',
+        showSubResults: true,
+        excerptLength: 20,
+        pageSize: 8,
+        translations: {
+          placeholder: '搜索作品、日志、能力…',
+          zero_results: '没有找到「[SEARCH_TERM]」相关内容',
+          many_results: '找到 [COUNT] 条与「[SEARCH_TERM]」相关的结果',
+          one_result: '找到 1 条与「[SEARCH_TERM]」相关的结果',
+          clear_search: '清除',
+          load_more: '加载更多',
+          search_label: '站内搜索',
+        },
+      });
+    };
+    script.onerror = function () {
+      document.getElementById('search-fallback').classList.remove('hidden');
+    };
+    document.head.appendChild(script);
+  })();
+</script>

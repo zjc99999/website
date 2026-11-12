@@ -1,11 +1,16 @@
 ---
 /**
- * 全站基础布局：语义骨架 + 主导航 + 页脚 + SEO 占位。
- * M4 接入 Seo.astro 组件（meta/OG/结构化数据/canonical）。
+ * 全站基础布局：语义骨架 + 主导航 + 页脚 + SEO（M4 接入 Seo.astro）。
  *
- * 页面只需 <BaseLayout title="..." description="...">…</BaseLayout>，
- * nav/footer 由本布局统一注入，避免 11 个页面重复；profile.json 是首屏
- * 身份与页脚署名的唯一数据源（E6 / 5.3）。
+ * 页面只需 <BaseLayout title="..." description="..." seo={{ type:'article', ... }}>…</BaseLayout>，
+ * nav/footer 由本布局统一注入，避免多处重复；profile.json 是首屏身份与页脚署名的
+ * 唯一数据源（E6 / 5.3）。
+ *
+ * Pagefind：仅 <main> 带 data-pagefind-body → 只索引正文，nav/footer 不污染结果；
+ * /search 页的 UI 脚本按需加载，不进首屏预算（E7）。
+ *
+ * 关于 <script>：Seo.astro 输出的是 <script type="application/ld+json">（JSON-LD 数据块，
+ * 浏览器不执行）。E7「零客户端 JS」只统计可执行脚本，JSON-LD 不计入。
  *
  * Astro 7 模板纪律（EX-2 / D2）：所有非 void 标签严格闭合；
  * compressHTML 已显式设回 true（见 astro.config.mjs）。
@@ -14,18 +19,32 @@ import '../styles/global.css';
 import { getEntry } from 'astro:content';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Seo from '../components/Seo.astro';
 import { SITE } from '../lib/constants';
+
+/** 与 Seo.astro 的 Props 对齐（这里不 import .astro 类型，避免跨文件类型解析差异） */
+interface SeoOverrides {
+  type?: 'website' | 'article' | 'product';
+  image?: { src: string; width: number; height: number; format?: string } | string;
+  publishedAt?: Date;
+  modifiedAt?: Date;
+  noindex?: boolean;
+  seo?: { title?: string; description?: string; og?: string };
+  canonicalPath?: string;
+}
 
 interface Props {
   title?: string;
   description?: string;
   currentPath?: string;
+  seo?: SeoOverrides;
 }
 
 const {
   title = SITE.defaultTitle,
   description = SITE.defaultDescription,
   currentPath = Astro.url.pathname,
+  seo,
 } = Astro.props;
 
 const profile = (await getEntry('profile', 'me'))!.data;
@@ -36,16 +55,15 @@ const profile = (await getEntry('profile', 'me'))!.data;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <Seo title={title} description={description} {...seo} />
   </head>
   <body>
     <a href="#main" class="sr-only focus:not-sr-only">跳到正文</a>
     <Nav currentPath={currentPath} />
-    <main id="main">
+    <main id="main" data-pagefind-body>
       <slot />
     </main>
     <Footer name={profile.name} socials={profile.socials} />

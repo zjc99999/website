@@ -6,6 +6,7 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LogTimeline from '../../components/LogTimeline.astro';
+import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import { getProducts, getLogsForProduct } from '../../lib/queries';
 import { STAGE_LABEL, formatDate } from '../../lib/constants';
@@ -25,6 +26,7 @@ const d = product.data;
   title={`${d.title} · 作品 · Atelier`}
   description={d.summary}
   currentPath="/products"
+  seo={{ type: 'product', image: d.cover, publishedAt: d.launch_date, modifiedAt: d.updated_at, seo: d.seo }}
 >
   <article class="mx-auto max-w-3xl px-6 py-12">
     <p class="text-sm opacity-70">
@@ -37,7 +39,20 @@ const d = product.data;
       </span>
     </div>
     <p class="mt-2 text-xl">{d.tagline}</p>
-    <p class="mt-2 text-sm opacity-65">
+    {
+      d.cover && (
+        <div class="mt-6 overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700">
+          <Image
+            src={d.cover}
+            alt={`${d.title} 的封面图`}
+            widths={[600, 1000]}
+            sizes="(max-width: 768px) 100vw, 768px"
+            class="h-auto w-full"
+          />
+        </div>
+      )
+    }
+    <p class="mt-4 text-sm opacity-65">
       {d.launch_date && <>{formatDate(d.launch_date)} 上线 · </>}
       {d.url && <><a href={d.url} rel="noopener noreferrer" class="underline">访问站点 ↗</a> · </>}
       {d.repo_url && <a href={d.repo_url} rel="noopener noreferrer" class="underline">源码 ↗</a>}

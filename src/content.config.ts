@@ -47,20 +47,27 @@ const base = {
 
 const products = defineCollection({
   loader: glob({ base: './src/content/products', pattern: '**/*.{md,mdx}' }),
-  schema: z.object({
-    ...base,
-    tagline: z.string().min(1, { error: 'tagline 不能为空' }),
-    // 与 base.status（内容发布态）区分：这里是产品生命周期。
-    // 规划书 §5.2 示意叫 status_product；实现改名为 stage，避免 frontmatter 里出现两个 status。
-    stage: z.enum(['idea', 'building', 'live', 'archived']).default('building'),
-    url: z.string().optional(),
-    repo_url: z.string().optional(),
-    cover: z.string().optional(),
-    metrics: z.record(z.string(), z.union([z.string(), z.number()])).default({}),
-    launch_date: z.coerce.date().optional(),
-    featured: z.boolean().default(false),
-    order: z.number().default(0),
-  }),
+  // 函数式 schema 才能拿到 Astro 的 image() helper（M4 实测：
+  // astro/dist/content/config.d.ts:58 `schema?: S | ((context: SchemaContext) => S)`）。
+  // image() 把相对路径解析成 ImageMetadata，交给 Astro 内置 sharp 优化；
+  // 注意 image().refine() 不受支持，故格式约束只靠后缀与构建期报错。
+  schema: ({ image }) =>
+    z.object({
+      ...base,
+      tagline: z.string().min(1, { error: 'tagline 不能为空' }),
+      // 与 base.status（内容发布态）区分：这里是产品生命周期。
+      // 规划书 §5.2 示意叫 status_product；实现改名为 stage，避免 frontmatter 里出现两个 status。
+      stage: z.enum(['idea', 'building', 'live', 'archived']).default('building'),
+      url: z.string().optional(),
+      repo_url: z.string().optional(),
+      // 相对内容文件的路径（例：./atelier-cover.png），构建期由 sharp 生成 WebP/AVIF。
+      // 可选字段一律省略，不要写空值（YAML 空值会被解析成 null 而非 string，见 M2 教训）。
+      cover: image().optional(),
+      metrics: z.record(z.string(), z.union([z.string(), z.number()])).default({}),
+      launch_date: z.coerce.date().optional(),
+      featured: z.boolean().default(false),
+      order: z.number().default(0),
+    }),
 });
 
 const log = defineCollection({

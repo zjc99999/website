@@ -17,6 +17,7 @@ const { Content } = await render(entry);
   title={`${entry.data.title} · Atelier`}
   description={entry.data.summary}
   currentPath={currentPath}
+  seo={{ type: 'article', publishedAt: entry.data.published_at, modifiedAt: entry.data.updated_at, seo: entry.data.seo }}
 >
   <article class="mx-auto max-w-3xl px-6 py-12">
     <h1 class="text-3xl font-semibold">{entry.data.title}</h1>
