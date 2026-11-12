@@ -1,10 +1,16 @@
 ---
-/** 联系页：主 CTA 落地页。表单与订阅共用同一组件（M5 接端点）。 */
+/**
+ * 联系页：主 CTA 落地页（M5）。
+ * 表单与订阅共用 SubscribeForm；预约外链仅在 PUBLIC_CAL_URL 配置时渲染（不留死链）。
+ * 方案 A 下没有任何后端：即使表单端点全部失效，本页仍完整可读、邮件兜底仍可点。
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SubscribeForm from '../components/SubscribeForm.astro';
 import { getEntry } from 'astro:content';
+import { PUBLIC_CONFIG } from '../lib/config';
 
 const profile = (await getEntry('profile', 'me'))!.data;
+const calUrl = PUBLIC_CONFIG.calUrl;
 ---
 
 <BaseLayout title="联系 · Atelier" description="聊聊你的项目，或从一顿 30 分钟的通话开始" currentPath="/contact">
@@ -17,6 +23,24 @@ const profile = (await getEntry('profile', 'me'))!.data;
     <div class="mt-8">
       <SubscribeForm mode="contact" />
     </div>
+
+    {
+      calUrl && (
+        <section class="mt-10" aria-labelledby="booking-heading">
+          <h2 id="booking-heading" class="text-xl font-semibold">或直接约个时间</h2>
+          <p class="mt-2 text-sm opacity-75">
+            30 分钟，不推销。链接会跳转到第三方预约页，只有你点击时才会加载它。
+          </p>
+          <a
+            href={calUrl}
+            rel="noopener noreferrer"
+            data-booking-link
+            class="mt-3 inline-block rounded-md border border-neutral-400 px-4 py-2 text-sm no-underline hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-neutral-600 dark:hover:bg-neutral-800"
+            >预约 30 分钟通话 ↗</a
+          >
+        </section>
+      )
+    }
 
     {
       profile.contact_channels.length > 0 && (

@@ -21,6 +21,7 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Seo from '../components/Seo.astro';
 import { SITE } from '../lib/constants';
+import { PUBLIC_CONFIG, ANALYTICS_ENABLED } from '../lib/config';
 
 /** 与 Seo.astro 的 Props 对齐（这里不 import .astro 类型，避免跨文件类型解析差异） */
 interface SeoOverrides {
@@ -48,6 +49,8 @@ const {
 } = Astro.props;
 
 const profile = (await getEntry('profile', 'me'))!.data;
+/** data-domains 必须跟随 site（M7 换真实域名后自动生效），不能写死占位域名 */
+const analyticsDomain = Astro.site?.hostname ?? '';
 ---
 
 <!doctype html>
@@ -59,6 +62,17 @@ const profile = (await getEntry('profile', 'me'))!.data;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <Seo title={title} description={description} {...seo} />
+    {
+      ANALYTICS_ENABLED && (
+        <script
+          is:inline
+          defer
+          src={PUBLIC_CONFIG.umamiScriptUrl}
+          data-website-id={PUBLIC_CONFIG.umamiWebsiteId}
+          data-domains={analyticsDomain}
+        />
+      )
+    }
   </head>
   <body>
     <a href="#main" class="sr-only focus:not-sr-only">跳到正文</a>

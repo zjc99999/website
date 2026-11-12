@@ -16,7 +16,9 @@
     "test:rules": "node scripts/verify-hard-rules.mjs",
     "test:perf": "node scripts/perf-check.mjs",
     "test:search": "node scripts/verify-search.mjs",
-    "test:e2e": "pnpm test:perf && pnpm test:search",
+    "test:lead": "node scripts/verify-lead.mjs",
+    "test:nodynamic": "node scripts/verify-no-dynamic.mjs",
+    "test:e2e": "pnpm test:perf && pnpm test:search && pnpm test:lead && pnpm test:nodynamic",
     "pagefind": "node scripts/pagefind-index.mjs",
     "make:cover": "node scripts/make-cover.mjs"
   },
