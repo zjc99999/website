@@ -45,7 +45,7 @@ jobs:
     name: 1/4 依赖与静态检查
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
         with:
           version: 11.28.5
@@ -64,7 +64,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
         with:
           version: 11.28.5
@@ -89,7 +89,7 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
         with:
           version: 11.28.5
@@ -121,7 +121,7 @@ jobs:
     needs: browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 确认没有密钥被提交
         shell: bash
         # 与本地 pnpm verify:ci 共用 scripts/secret-scan.mjs 这一个引擎：
