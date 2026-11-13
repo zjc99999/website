@@ -78,7 +78,7 @@ jobs:
       - name: 构建 + CSP 生成 + 全量质量
         run: pnpm run quality
       - name: 上传构建产物（供后续 job 与人工预览）
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
