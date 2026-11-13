@@ -109,7 +109,7 @@ jobs:
           echo "PW_CHROME=$CHROME_PATH" >> "$GITHUB_ENV"
           echo "使用浏览器：$CHROME_PATH"
       - name: 取回构建产物
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
