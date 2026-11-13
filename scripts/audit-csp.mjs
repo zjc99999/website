@@ -13,6 +13,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const DIST = new URL('../dist/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// 与 astro.config.mjs 的 site 保持同源（M7 真实域名）；用于把首方绝对 URL 排除在 externalOrigins 之外。
+const SELF_ORIGIN = new URL(process.env.PUBLIC_SITE_URL || 'https://website.85138175.xyz').origin;
 const files = [];
 (function walk(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -45,7 +47,7 @@ for (const f of files) {
   images += (h.match(/<img\b/g) || []).length;
   forms += (h.match(/<form\b/g) || []).length;
   for (const m of h.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
-    try { origins.add(new URL(m[1], 'https://atelier.example.com').origin); } catch { /* 相对链接 */ }
+    try { origins.add(new URL(m[1], SELF_ORIGIN).origin); } catch { /* 相对链接 */ }
   }
 }
 
@@ -59,5 +61,5 @@ console.log(JSON.stringify({
   inlineStyles,
   images,
   forms,
-  externalOrigins: [...origins].filter((o) => !o.includes('atelier.example.com')),
+  externalOrigins: [...origins].filter((o) => o !== SELF_ORIGIN),
 }, null, 2));

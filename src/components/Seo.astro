@@ -51,7 +51,7 @@ const {
 const title = seo?.title ?? rawTitle;
 const description = seo?.description ?? rawDescription;
 
-const site = Astro.site ?? new URL('https://atelier.example.com/');
+const site = Astro.site ?? new URL('https://website.85138175.xyz/');
 const canonical = new URL(canonicalPath, site).href;
 
 // og 优先级：frontmatter seo.og > 传入的 image() 元数据

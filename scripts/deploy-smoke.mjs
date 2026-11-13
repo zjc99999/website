@@ -76,7 +76,12 @@ async function run(base, { expectHeaders }) {
   const exec = scripts.filter((a) => !/application\/ld\+json/.test(a));
   check('首页零可执行客户端脚本（E7）', exec.length === 0, `exec=${exec.length} ldjson=${scripts.length - exec.length}`);
 
-  // 3) 机器可读产物：RSS / JSON Feed / sitemap / Pagefind UI
+  // 3) 机器可读产物：RSS / JSON Feed / sitemap / Pagefind UI / robots
+  const robots = await get(base, '/robots.txt');
+  check('robots.txt 指向真实域名 sitemap',
+    robots.status === 200 && /Sitemap:\s*https:\/\/website\.85138175\.xyz\/sitemap-index\.xml/.test(robots.text),
+    `status=${robots.status}`);
+
   const rss = await get(base, '/rss.xml');
   const rssOk = rss.status === 200 && /<rss\b[^>]*version="2\.0"/.test(rss.text) && /<item>/.test(rss.text);
   check('RSS 2.0 可被阅读器消费（含 item）', rssOk, `status=${rss.status} bytes=${rss.text.length}`);

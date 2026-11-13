@@ -38,10 +38,16 @@ function atelierPagefind() {
   };
 }
 
-// site 为占位：M7 换成真实自定义域名（驱动 canonical / sitemap / OG / RSS / JSON Feed）
-// 见 docs/项目设计与实现规划书.md 第 11 章「待提供 ⑤」
+/**
+ * 站点公开 URL（M7 落地）：由部署平台的环境变量 PUBLIC_SITE_URL 驱动，
+ * 默认值为已确定的自定义域名 website.85138175.xyz（Cloudflare Pages 项目 website）。
+ * 这一处同时决定 canonical / sitemap / OG / RSS / JSON Feed 的绝对地址；
+ * 用 process.env 而非 import.meta.env —— astro.config.mjs 在 Vite 加载 env 之前执行。
+ */
+const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://website.85138175.xyz';
+
 export default defineConfig({
-  site: 'https://atelier.example.com',
+  site: SITE_URL,
   integrations: [
     mdx(),
     // /search 页在 Seo.astro 里标了 noindex（站内搜索结果页无需被搜索引擎收录），

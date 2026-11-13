@@ -136,8 +136,10 @@ const profile = defineCollection({
     bio: z.string(),
     availability: z.string(),
     location: z.string().optional(),
+    // 联系方式分两类：url 用于可点击外链；value 用于微信 ID 这类纯文本
+    // （微信号不是 URL，不能塞进 <a href>，否则会造出死链）。
     contact_channels: z
-      .array(z.object({ label: z.string(), url: z.string() }))
+      .array(z.object({ label: z.string(), url: z.string().optional(), value: z.string().optional() }))
       .default([]),
     socials: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
   }),

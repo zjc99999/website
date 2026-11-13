@@ -23,6 +23,9 @@ import { buildCsp } from './csp-policy.mjs';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(ROOT, 'dist');
 const HEADERS = join(ROOT, 'public', '_headers');
+// 与 astro.config.mjs 的 site 保持同源：相对 URL 与指向本站的绝对 URL 都算首方，
+// 只有真正的外域 origin 才会被收进 CSP 白名单。M7 起默认值为真实自定义域名。
+const SELF_ORIGIN = new URL(process.env.PUBLIC_SITE_URL || 'https://website.85138175.xyz').origin;
 
 const walk = async (dir) => {
   const out = [];
@@ -36,8 +39,8 @@ const walk = async (dir) => {
 
 const originOf = (raw) => {
   try {
-    const u = new URL(raw, 'https://atelier.example.com');
-    return u.origin === 'https://atelier.example.com' ? null : u.origin;
+    const u = new URL(raw, SELF_ORIGIN);
+    return u.origin === SELF_ORIGIN ? null : u.origin;
   } catch {
     return null;
   }

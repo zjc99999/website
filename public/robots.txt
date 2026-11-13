@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-# sitemap 由 @astrojs/sitemap 生成；部署前把域名换成真实自定义域名
-Sitemap: https://atelier.example.com/sitemap-index.xml
+# sitemap 由 @astrojs/sitemap 生成；M7 已换成真实自定义域名
+Sitemap: https://website.85138175.xyz/sitemap-index.xml

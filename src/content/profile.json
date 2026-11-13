@@ -7,7 +7,10 @@
     "bio": "独立开发者，记录从想法到上线全过程。",
     "availability": "开放合作",
     "location": "",
-    "contact_channels": [],
+    "contact_channels": [
+      { "label": "邮箱", "url": "mailto:zjc_9999@163.com", "value": "zjc_9999@163.com" },
+      { "label": "微信", "value": "dianfeng1998" }
+    ],
     "socials": []
   }
 ]

@@ -17,7 +17,7 @@ const rows: Row[] = [];
 /** 配置可能是相对路径或无效 URL，别让隐私页把构建弄崩 */
 const hostOf = (u: string): string => {
   try {
-    return new URL(u, 'https://atelier.example.com').hostname;
+    return new URL(u, 'https://website.85138175.xyz').hostname;
   } catch {
     return u || '未启用';
   }
