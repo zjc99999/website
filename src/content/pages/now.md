@@ -17,8 +17,10 @@ locale: zh-CN
 - M7 准备（不依赖账号的部分）已完成：把 CI 从「本机 Windows 专用路径」改成标准 GitHub Actions（ubuntu-latest + setup-node + pnpm + 跨平台 Chrome 定位），写了 `docs/部署与回滚演练.md` 清单与 `pnpm deploy:smoke` 冒烟；本地实测 11 页 / feed / sitemap / Pagefind / 真 CSP 头全通过。
 - M7 真实配置已落代码：域名 `website.85138175.xyz` 驱动 canonical / sitemap / OG / RSS / JSON Feed；对外邮箱、微信号、Cal.com 预约链接已内置；微信号按纯文本展示不造死链；CSP 的首方 origin 与站点同步。本地两条质量链 + 冒烟全绿。
 - M7-B：代码已首推到 `zjc99999/website`（走代理 3067），GitHub Actions 在 ubuntu-latest 托管 runner 上实跑——首个 run audit 的密钥检查因规则过宽假红，改为单一扫描引擎后第二个 run `43395389553` **4/4 全绿**；Lighthouse / axe / Playwright / 24 单测都在 CI 里真跑过。
-- 远端冒烟发现一个诚实的问题：CF 报 "Deploy successful" 但发布的是**仓库源码而非 dist/**（真实项目域 `website-1tq.pages.dev`，`/package.json` 200、`/index.html` 404），根因是 CF 后台没配 Build command / 输出目录。已把精确后台操作清单写进 `docs/部署与回滚演练.md`。
-- 尚未闭环：① CF 后台配 `pnpm build` + 输出目录 `dist` + `PNPM_VERSION=11.28.5` 并重新部署；② 自定义域名 `website.85138175.xyz` 的 CNAME/HTTPS；③ 远端 `deploy:smoke:remote` 全绿；④ 一次「发布→回滚→再发布」演练与国内/第三方实测；⑤ 作者真实收到通知（需真实 `PUBLIC_FORM_ENDPOINT` 人工确认一次）；⑥ 5 人 3 秒测试（需真人，留 M8）。
-- 接下来：等 CF 后台构建配置生效后重跑远端冒烟，把「CI 全绿」与「线上产物正确」这两件事真正对齐。
+- 中途发现并修掉两个诚实的问题：CF 报 "Deploy successful" 但发布的是**仓库源码而非 dist/**，根因是后台没配 Build command / 输出目录（配 `pnpm build` + `dist` + `PNPM_VERSION=11.28.5` 后须重新触发构建才生效）；旧部署的 `/package.json` 等路径短暂返回 200 是**边缘缓存残留**（`s-maxage=604800`），带随机 query 回源即证伪。
+- 现在站点真的上线了：项目域 `website-1tq.pages.dev` 与自定义域名 `website.85138175.xyz` 的远端冒烟均 **PASS / failed:0**，canonical / OG / RSS / sitemap / feed 全用真实域名，严格 CSP 作为真响应头生效，Cal.com 预约链接可达。
+- M7-C 完成了一次真刀真枪的「发布→回滚→再发布」演练：用本产品的 `new:log` 写作流发一条哨兵日志做可见信号，基线(11 条 feed)→发布(12)→本人在 CF 后台按部署 ID 精确回滚(11，哨兵消失)→空提交再发布(12，哨兵回来)，四轮远端冒烟全 PASS。演练还挖出「文档回填会再触发含哨兵的部署、不能只选上一份」这个坑。
+- 尚未闭环：① 国内访问与邮件送达实测；② 作者真实收到通知（需真实 `PUBLIC_FORM_ENDPOINT` 人工确认一次，M5 DoD ①）；③ 演练签字表四行的真人签字（工程证据齐备）；④ 5 人 3 秒测试（需真人，留 M8）。
+- 接下来：补齐第三方与国内实测、更新 M7 执行日志，然后进入 M8「填真实内容 + 连续四周自用」。
 
 这个页面按 `/now` 的惯例维护，内容短，改起来不费劲。
