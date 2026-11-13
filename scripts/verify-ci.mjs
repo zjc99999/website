@@ -14,7 +14,7 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { scan } from './secret-scan.mjs';
 
 const ROOT = process.cwd();
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
@@ -59,21 +59,16 @@ for (const need of ['quality', 'quality:browser', 'test']) {
 }
 check('ci.yml 串行（needs 链）', (yml.match(/needs:/g) || []).length >= 3, 'yes/no');
 
-// 5. 密钥 hygiene：被跟踪文件里不能有 .env（除 .env.example）或密钥字面量
-let tracked = [];
-try { tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n'); } catch { /* 非 git 仓库时跳过 */ }
-const envFiles = tracked.filter((f) => /(^|\/)\.env($|\.)/.test(f) && f !== '.env.example');
-check('无 .env 文件入库', envFiles.length === 0, envFiles.join(',') || 'ok');
-const secretRe = /(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
-// 这两个文件本身就写着这条检测规则（M6 提交后它们变成 tracked，曾导致自匹配假红）：
-// 它们是「检测器」，不是「藏密钥的地方」，必须排除，否则规则永远对自己报警。
-const detectorFiles = new Set(['.github/workflows/ci.yml', 'scripts/verify-ci.mjs']);
-const withSecret = tracked.filter((f) => {
-  if (detectorFiles.has(f)) return false;
-  if (!existsSync(join(ROOT, f))) return false;
-  try { return secretRe.test(readFileSync(join(ROOT, f), 'utf8')); } catch { return false; }
-});
-check('无密钥字面量入库（排除检测器自身）', withSecret.length === 0, withSecret.join(',') || 'ok');
+// 5. 密钥 hygiene：与 CI 的 audit job 共用 scripts/secret-scan.mjs 这一个引擎。
+//    M7 首推时两边各写一份规则（远端 git grep 过宽→假红、本地 JS 遇中文文件名
+//    八进制转义静默跳过→假绿），行为不一致。现在规则与执行都只有一处。
+const hygiene = scan({ root: ROOT });
+check('CI 与本地共用同一密钥扫描引擎', hygiene.ciUsesSharedEngine, 'yes/no');
+check('密钥规则不自匹配（无需白名单打补丁）', !hygiene.ruleMatchesSelf, 'yes/no');
+check('无 .env 文件入库', hygiene.envFiles.length === 0, hygiene.envFiles.join(',') || 'ok');
+check('无密钥字面量入库', hygiene.withSecret.length === 0, hygiene.withSecret.join(',') || 'ok');
+check('所有被跟踪文件都可读取（无静默跳过）', hygiene.skipped.length === 0, hygiene.skipped.join(',') || 'ok');
+check('密钥扫描确实扫到了文件（非假绿）', hygiene.scanned > 0, `scanned=${hygiene.scanned}`);
 
 // 6. 关键文件存在
 for (const f of ['public/_headers', '.github/dependabot.yml', 'playwright.config.ts', 'vitest.config.ts']) {

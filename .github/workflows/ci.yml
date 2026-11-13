@@ -124,13 +124,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: 确认没有密钥被提交
         shell: bash
-        # 排除两个「检测器」文件：它们本身就写着这条正则，不排除会自匹配假红
-        # （scripts/verify-ci.mjs 里也做了同样的排除，两处保持一致）。
-        run: |
-          set -euo pipefail
-          bad=$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '^\.env\.example$' || true)
-          if [ -n "$bad" ]; then echo "发现被跟踪的 .env 文件：$bad"; exit 1; fi
-          hits=$(git grep -n -E '(sk_live_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
-            -- . ':!*.lock' ':!.github/workflows/ci.yml' ':!scripts/verify-ci.mjs' || true)
-          if [ -n "$hits" ]; then echo "疑似密钥进入仓库："; echo "$hits"; exit 1; fi
-          echo 'OK：无 .env 文件、无密钥字面量入库'
+        # 与本地 pnpm verify:ci 共用 scripts/secret-scan.mjs 这一个引擎：
+        # M7 首推时远端用 git grep（过宽，把「提到正则」的创作日志扫成密钥 → 假红）、
+        # 本地用 JS（Windows 中文文件名八进制转义 → 静默跳过 → 假绿），两者行为不一致。
+        # 现在规则与执行都只有一处；脚本自身会断言 ci.yml 引用了它，防止再次漂移。
+        run: node scripts/secret-scan.mjs
