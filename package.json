@@ -10,6 +10,7 @@
     "check": "astro check",
     "sync": "astro sync",
     "new:log": "node scripts/new-log.mjs",
+    "new:product": "node scripts/new-product.mjs",
     "changelog": "node scripts/changelog.mjs",
     "export:all": "node scripts/export-all.mjs",
     "test": "pnpm check && pnpm test:rules && pnpm test:unit",

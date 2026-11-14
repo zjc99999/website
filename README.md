@@ -25,13 +25,14 @@ pnpm preview          # 预览构建产物
 pnpm check            # astro check（TS 类型 + Astro 模板校验）
 pnpm sync             # 生成 .astro/ 类型（内容集合变更后跑）
 pnpm new:log          # 2 分钟新建一条创作日志（M2 起可用）
+pnpm new:product      # 交互式新建一个作品 .mdx（frontmatter 骨架 + 校验）
 pnpm changelog        # 汇总最近 7 天已发布日志 → exports/ 周报草稿（--all 全部）
 pnpm export:all       # 导出全量明文内容 + 订阅者 CSV 模板 → exports/
 pnpm run quality      # ★ 主门禁：build + CSP 生成 + 全量非浏览器测试 + CI 链自检
 pnpm run quality:browser  # ★ 浏览器门禁：E2E 全套 + Lighthouse + axe（需系统 Chrome）
 pnpm test             # = check + test:rules + test:unit（不含浏览器用例的全量回归）
 pnpm test:rules       # 三条构建期硬校验（E4-a/b/c）被违反时 build 必须失败
-pnpm test:unit        # vitest 单测（常量/证据链/CSP 策略，24 项）
+pnpm test:unit        # vitest 单测（常量/证据链/CSP 策略/新建作品工具，37 项）
 pnpm test:perf        # G2 真实浏览器实测：LCP/CLS/首屏 JS（Slow 4G + CPU×4）
 pnpm test:search      # 真实浏览器验证 Pagefind 站内搜索能初始化并返回结果
 pnpm test:lead        # M5 DoD ①②③：真实提交订阅/联系表单，校验字段与来源留痕、邮件兜底
@@ -66,11 +67,24 @@ pnpm new:log "给首页做了 3 秒测试"
 
 ## 怎么加一个作品
 
-在 `src/content/products/` 新建 `.mdx`，按同目录已有文件的 frontmatter 填写；
-阶段字段是 `stage`（取 `idea | building | live | archived`，默认 `building`），
-`featured: true` 才会进首页「精选作品 ≤3」。
-能力必须挂 `evidence_ids`（无证据的能力不允许发布）；证据 id 写 `"<集合名>/<条目 id>"`（如 `products/atelier`），
-构建期会校验**目标真实存在**，指向不存在的条目会直接让 build 失败；案例必须 `consent: true`（未授权客户信息不公开）。
+```bash
+pnpm new:product                       # 交互式：按提示填标题/摘要/阶段/是否进首页…
+pnpm new:product "焕名 文件批量重命名" \
+  --stage=live --featured --url=https://example.com --repo_url=https://github.com/me/huanming
+# 非交互/CI 用 --key=value；生成 src/content/products/<slug>.mdx，填正文后 git push
+```
+
+工具负责最容易出错的那一半：合法 frontmatter、绝不写空值、可选字段省略、
+`order` 自动取现有最大值 +1、枚举/URL/日期前置校验。**它只生成文件，不会替你
+`git commit` / `git push`**——发布仍由你手动确认后一条 `git push` 完成。
+完整参数、字段含义、发布链路与常见错误见 [docs/使用指南-添加作品.md](docs/使用指南-添加作品.md)。
+
+几个要点（手写时也适用）：阶段字段叫 `stage`（`idea | building | live | archived`，
+默认 `building`），`status` 只认 `draft | published`；`featured: true` 才进首页「精选作品 ≤3」；
+`cover` 用相对内容文件的路径（如 `../../assets/atelier-cover.png`）；可选字段没值就整行省略。
+能力必须挂 `evidence_ids`（无证据的能力不允许发布），证据 id 写 `"<集合名>/<条目 id>"`
+（如 `products/atelier`），构建期校验**目标真实存在**，指向不存在的条目会直接让 build 失败；
+案例必须 `consent: true`（未授权客户信息不公开）。
 
 ## 目录速查
 
@@ -95,14 +109,14 @@ pnpm new:log "给首页做了 3 秒测试"
 | `.github/dependabot.yml` | 依赖更新报告（只提 PR、禁止自动合并；忽略 typescript 主版本升级） |
 | `public/_headers` | 由 `test:csp` 生成的严格 CSP + 安全响应头（入库，部署平台直接消费） |
 | `functions/api/` | R1 方案 A 留空；R1.5/B 方案才启用 |
-| `scripts/` | 新建日志、周更汇总、全量导出、硬校验回归、性能/搜索/线索/不变量实测、封面生成 |
+| `scripts/` | 新建日志与作品、周更汇总、全量导出、硬校验回归、性能/搜索/线索/不变量实测、封面生成 |
 | `public/` | favicon、robots.txt、`_headers` |
 
 ## 配置
 
 复制 `.env.example` 为 `.env` 并按需填写；**密钥绝不入库**。
-`astro.config.mjs` 里的 `site` 目前是占位域名，部署前换成真实自定义域名——
-它会一处驱动 canonical、sitemap、OG、RSS、JSON Feed，无需逐个改。
+`astro.config.mjs` 里的 `SITE_URL` 默认已是真实自定义域名 `https://website.85138175.xyz`
+（可用构建期环境变量 `PUBLIC_SITE_URL` 覆盖）——它会一处驱动 canonical、sitemap、OG、RSS、JSON Feed，无需逐个改。
 
 **图片**：作品 frontmatter 的 `cover` 用相对**内容文件**的路径（如
 `../../assets/atelier-cover.png`），由 Astro 的 `image()` schema helper 解析成
@@ -128,7 +142,7 @@ pnpm new:log "给首页做了 3 秒测试"
 生成 `dist/pagefind/`，所以**不要**把 `build` 改成 `astro build && ...`——
 E4 违规探针回归会因此被污染。`/search` 页已 `noindex` 并被 sitemap 的 `filter` 排除。
 
-**质量门禁（M6）**：`pnpm run quality` = `build → test:csp → test（check + E4 三条 + 24 个单测）→ verify:ci`；
+**质量门禁（M6）**：`pnpm run quality` = `build → test:csp → test（check + E4 三条 + 37 个单测）→ verify:ci`；
 `pnpm run quality:browser` = 全部浏览器回归 + Lighthouse + axe。两条链与 `.github/workflows/ci.yml`
 跑的是同一组脚本，CI 不另搞一套断言。注意 **`pnpm ci` 是 pnpm 内建命令**（clean-install），
 不要用它跑本仓库的门禁，用 `pnpm run quality`。浏览器用例复用系统 Chrome
