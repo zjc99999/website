@@ -8,11 +8,11 @@ const products = await getProducts();
 ---
 
 <BaseLayout title="作品 · Atelier" description="我做过的、正在做的、以及已经归档的产品" currentPath="/products">
-  <div class="mx-auto max-w-3xl px-6 py-12">
-    <h1 class="text-3xl font-semibold">作品</h1>
-    <p class="mt-2 opacity-80">状态如实标出：想法中 / 开发中 / 已上线 / 已归档。</p>
+  <div class="wrap page">
+    <h1 class="page-title">作品</h1>
+    <p class="page-lead">状态如实标出：想法中 / 开发中 / 已上线 / 已归档。</p>
 
-    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+    <div class="card-grid">
       {products.map((p) => (
         <ProductCard
           id={p.id}
@@ -29,6 +29,6 @@ const products = await getProducts();
       ))}
     </div>
 
-    {products.length === 0 && <p class="mt-8 opacity-70">还没有公开的作品。</p>}
+    {products.length === 0 && <p class="empty-note">还没有公开的作品。</p>}
   </div>
 </BaseLayout>

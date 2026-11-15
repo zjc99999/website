@@ -18,17 +18,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="搜索 · Atelier" description="在作品、创作记录与能力中查找" currentPath="/search" seo={{ noindex: true }}>
-  <div class="mx-auto max-w-3xl px-6 py-12">
-    <h1 class="text-3xl font-semibold">搜索</h1>
-    <p class="mt-2 opacity-80">输入关键词，在作品、创作记录与能力里查找。索引在每次构建时静态生成，不需要服务端。</p>
+  <div class="wrap page">
+    <h1 class="page-title">搜索</h1>
+    <p class="page-lead">输入关键词，在作品、创作记录与能力里查找。索引在每次构建时静态生成，不需要服务端。</p>
 
-    <div id="search" data-pagefind-ignore class="mt-8"></div>
+    <div id="search" data-pagefind-ignore class="block-gap"></div>
 
     <noscript>
-      <p class="mt-6 text-sm opacity-70">搜索需要 JavaScript。也可以直接浏览 <a href="/products" class="underline">作品</a>、<a href="/log" class="underline">创作日志</a> 与 <a href="/capabilities" class="underline">能力</a>。</p>
+      <p class="lead-note">搜索需要 JavaScript。也可以直接浏览 <a href="/products">作品</a>、<a href="/log">创作日志</a> 与 <a href="/capabilities">能力</a>。</p>
     </noscript>
-    <p id="search-fallback" class="mt-6 hidden text-sm opacity-70">
-      搜索索引尚未生成（本地开发模式下正常）。可直接浏览 <a href="/products" class="underline">作品</a>、<a href="/log" class="underline">创作日志</a> 与 <a href="/capabilities" class="underline">能力</a>，或执行 <code>pnpm build</code> 生成索引后预览。
+    <p id="search-fallback" class="hidden lead-note">
+      搜索索引尚未生成（本地开发模式下正常）。可直接浏览 <a href="/products">作品</a>、<a href="/log">创作日志</a> 与 <a href="/capabilities">能力</a>，或执行 <code class="chip-code">pnpm build</code> 生成索引后预览。
     </p>
   </div>
 </BaseLayout>

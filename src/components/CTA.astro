@@ -2,6 +2,9 @@
 /**
  * 次级 CTA 区（L2 底部）。首屏 Hero 已有主/次 CTA，这里只做一次温和的
  * 「下一步」提示，不重复堆按钮（E6 预算：主 1 / 次 1）。
+ *
+ * 视觉：赤陶渐变顶边 + 微光面板，作为「递进路径」的收束终点（纯 CSS）。
+ * 只被 index.astro import。
  */
 import { CTA } from '../lib/constants';
 
@@ -16,17 +19,12 @@ const {
 } = Astro.props;
 ---
 
-<section class="mt-16 rounded-lg border border-neutral-300 p-6 dark:border-neutral-700" aria-labelledby="cta-heading">
-  <h2 id="cta-heading" class="text-xl font-semibold">{heading}</h2>
-  <p class="mt-2 opacity-85">{note}</p>
-  <div class="mt-4 flex flex-wrap gap-3">
-    <a
-      href={CTA.primary.href}
-      class="rounded-md bg-neutral-900 px-4 py-2 text-white no-underline hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-white dark:text-neutral-900"
-      >{CTA.primary.label}</a
-    >
-    <a href={CTA.soft.href} class="rounded-md border border-neutral-400 px-4 py-2 no-underline hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-neutral-600 dark:hover:bg-neutral-800">
-      {CTA.soft.label}
-    </a>
+<section class="cta-panel" aria-labelledby="cta-heading">
+  <p class="eyebrow">STEP 04 · 开始合作</p>
+  <h2 id="cta-heading" class="cta-title">{heading}</h2>
+  <p class="cta-note">{note}</p>
+  <div class="cta-actions">
+    <a href={CTA.primary.href} class="btn btn-primary">{CTA.primary.label}</a>
+    <a href={CTA.soft.href} class="btn btn-ghost">{CTA.soft.label}</a>
   </div>
 </section>

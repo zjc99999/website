@@ -4,6 +4,9 @@
  *
  * 关键：evidence 由 src/lib/evidence.ts 在构建期解析；指向不存在条目的
  * evidence_id 会让 astro build 直接失败，因此这里拿到的都是已验证链接。
+ *
+ * 视觉：每条左侧一条赤陶竖线，证据链接 chip 化（纯 CSS，见 global.css）。
+ * <li id={cap.id}> 保留，供 /capabilities#id 锚点直达。
  */
 import type { Evidence } from '../lib/evidence';
 
@@ -21,16 +24,16 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<ul class="space-y-6">
+<ul class="cap-list">
   {
     items.map((cap) => (
-      <li id={cap.id}>
-        <p class="text-xs font-medium uppercase tracking-wide opacity-60">{cap.category}</p>
-        <p class="mt-1 text-lg">{cap.statement}</p>
-        <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <li class="cap-item" id={cap.id}>
+        <p class="cap-category">{cap.category}</p>
+        <p class="cap-statement">{cap.statement}</p>
+        <ul class="evidence-links">
           {cap.evidence.map((e) => (
             <li>
-              <a href={e.href} class="underline">证据：{e.label} →</a>
+              <a href={e.href} class="evidence-chip">证据：{e.label} →</a>
             </li>
           ))}
         </ul>

@@ -19,10 +19,10 @@ const { Content } = await render(entry);
   currentPath={currentPath}
   seo={{ type: 'article', publishedAt: entry.data.published_at, modifiedAt: entry.data.updated_at, seo: entry.data.seo }}
 >
-  <article class="mx-auto max-w-3xl px-6 py-12">
-    <h1 class="text-3xl font-semibold">{entry.data.title}</h1>
-    <p class="mt-2 text-lg opacity-80">{entry.data.summary}</p>
-    <div class="prose mt-8">
+  <article class="wrap page">
+    <h1 class="page-title">{entry.data.title}</h1>
+    <p class="page-lead">{entry.data.summary}</p>
+    <div class="prose prose-block">
       <Content />
     </div>
   </article>

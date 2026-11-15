@@ -28,43 +28,38 @@ const d = product.data;
   currentPath="/products"
   seo={{ type: 'product', image: d.cover, publishedAt: d.launch_date, modifiedAt: d.updated_at, seo: d.seo }}
 >
-  <article class="mx-auto max-w-3xl px-6 py-12">
-    <p class="text-sm opacity-70">
-      <a href="/products" class="underline">← 返回作品</a>
-    </p>
-    <div class="mt-4 flex flex-wrap items-center gap-3">
-      <h1 class="text-3xl font-semibold">{d.title}</h1>
-      <span class="rounded-full border border-neutral-400 px-2 py-0.5 text-xs dark:border-neutral-600">
-        {STAGE_LABEL[d.stage] ?? d.stage}
-      </span>
+  <article class="wrap page">
+    <a href="/products" class="back-link">← 返回作品</a>
+    <div class="title-row">
+      <h1 class="page-title">{d.title}</h1>
+      <span class="stage-pill">{STAGE_LABEL[d.stage] ?? d.stage}</span>
     </div>
-    <p class="mt-2 text-xl">{d.tagline}</p>
+    <p class="page-lead">{d.tagline}</p>
     {
       d.cover && (
-        <div class="mt-6 overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700">
+        <div class="detail-cover">
           <Image
             src={d.cover}
             alt={`${d.title} 的封面图`}
             widths={[600, 1000]}
             sizes="(max-width: 768px) 100vw, 768px"
-            class="h-auto w-full"
           />
         </div>
       )
     }
-    <p class="mt-4 text-sm opacity-65">
+    <p class="detail-meta">
       {d.launch_date && <>{formatDate(d.launch_date)} 上线 · </>}
-      {d.url && <><a href={d.url} rel="noopener noreferrer" class="underline">访问站点 ↗</a> · </>}
-      {d.repo_url && <a href={d.repo_url} rel="noopener noreferrer" class="underline">源码 ↗</a>}
+      {d.url && <><a href={d.url} rel="noopener noreferrer">访问站点 ↗</a> · </>}
+      {d.repo_url && <a href={d.repo_url} rel="noopener noreferrer">源码 ↗</a>}
     </p>
 
-    <div class="prose mt-8">
+    <div class="prose prose-block">
       <Content />
     </div>
 
-    <section class="mt-12" aria-labelledby="product-logs-heading">
-      <h2 id="product-logs-heading" class="text-2xl font-semibold">这个作品的创作记录</h2>
-      <div class="mt-6">
+    <section class="section-block" aria-labelledby="product-logs-heading">
+      <h2 id="product-logs-heading" class="section-sub">这个作品的创作记录</h2>
+      <div class="block-gap">
         <LogTimeline
           showAll
           items={logs.map((l) => ({
@@ -76,7 +71,7 @@ const d = product.data;
           }))}
         />
       </div>
-      {logs.length === 0 && <p class="mt-4 text-sm opacity-70">还没有关联的记录。</p>}
+      {logs.length === 0 && <p class="empty-note">还没有关联的记录。</p>}
     </section>
   </article>
 </BaseLayout>

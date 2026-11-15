@@ -12,6 +12,9 @@
  * 不存明文 PII 到静态产物。同意时间由接收端点记录，静态站不伪造客户端时间戳。
  *
  * 可逆性：A→B（R1.5 自建 Serverless）只需替换本组件，业务字段不变。
+ *
+ * 视觉：圆角面板 + 统一 .field 输入框（纯 CSS）。测试钩子逐项保留：
+ * data-pagefind-ignore / data-lead-form / data-lead-fallback / 蜜罐 / 隐藏字段。
  */
 import { PUBLIC_CONFIG } from '../lib/config';
 
@@ -33,85 +36,54 @@ const mailSubject = isSubscribe ? '订阅创作记录' : '想聊聊一个项目'
 const mailto = email ? `mailto:${email}?subject=${encodeURIComponent(mailSubject)}` : '';
 ---
 
-<section
-  aria-labelledby="form-heading"
-  class="rounded-lg border border-neutral-300 p-6 dark:border-neutral-700"
-  data-pagefind-ignore
->
-  <h2 id="form-heading" class="text-xl font-semibold">{heading}</h2>
+<section class="panel" aria-labelledby="form-heading" data-pagefind-ignore>
+  <h2 id="form-heading" class="section-sub">{heading}</h2>
 
   {
     endpoint ? (
-      <form
-        action={endpoint}
-        method="POST"
-        data-lead-form={mode}
-        class="mt-4 space-y-4"
-      >
+      <form action={endpoint} method="POST" data-lead-form={mode} class="form-body">
         <input type="hidden" name="source" value={`site:${mode}`} />
         <input type="hidden" name="consent_source" value={mode} />
         <input type="hidden" name="_subject" value={mailSubject} />
         <!-- 蜜罐：真人看不见，机器人会填 -->
-        <label class="hidden" aria-hidden="true">
+        <label class="honeypot" aria-hidden="true">
           请勿填写
           <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
         </label>
         {!isSubscribe && (
-          <label class="block text-sm">
-            怎么称呼你
-            <input
-              type="text"
-              name="name"
-              required
-              class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
-            />
-          </label>
+          <div class="field-row">
+            <label class="field-label" for="lead-name">怎么称呼你</label>
+            <input type="text" id="lead-name" name="name" required class="field" />
+          </div>
         )}
-        <label class="block text-sm">
-          邮箱
-          <input
-            type="email"
-            name="email"
-            required
-            class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
-          />
-        </label>
+        <div class="field-row">
+          <label class="field-label" for="lead-email">邮箱</label>
+          <input type="email" id="lead-email" name="email" required class="field" />
+        </div>
         {!isSubscribe && (
-          <label class="block text-sm">
-            想聊什么（一两句话就够）
-            <textarea
-              name="message"
-              rows="3"
-              class="mt-1 block w-full rounded-md border border-neutral-400 bg-transparent px-3 py-2 dark:border-neutral-600"
-            />
-          </label>
+          <div class="field-row">
+            <label class="field-label" for="lead-message">想聊什么（一两句话就够）</label>
+            <textarea id="lead-message" name="message" rows="3" class="field"></textarea>
+          </div>
         )}
-        <label class="flex items-start gap-2 text-sm">
-          <input type="checkbox" name="consent" value="yes" required class="mt-1" />
+        <label class="consent-row">
+          <input type="checkbox" name="consent" value="yes" required />
           <span>{consentText}</span>
         </label>
-        <button
-          type="submit"
-          class="rounded-md bg-neutral-900 px-4 py-2 text-white hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-white dark:text-neutral-900"
-        >
-          {isSubscribe ? '订阅' : '发送'}
-        </button>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            {isSubscribe ? '订阅' : '发送'}
+          </button>
+        </div>
       </form>
     ) : (
-      <div class="mt-4 space-y-3 text-sm">
-        <p class="opacity-80">
-          在线表单尚未启用，可以直接发邮件给我。网站其余部分不受影响。
-        </p>
+      <div class="fallback-note">
+        <p>在线表单尚未启用，可以直接发邮件给我。网站其余部分不受影响。</p>
         {mailto && (
-          <a
-            href={mailto}
-            data-lead-fallback={mode}
-            class="inline-block rounded-md border border-neutral-400 px-4 py-2 no-underline hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-neutral-600 dark:hover:bg-neutral-800"
-            >写邮件给我 ↗</a
-          >
+          <a href={mailto} data-lead-fallback={mode} class="btn btn-ghost">写邮件给我 ↗</a>
         )}
         {!mailto && (
-          <p class="opacity-60">也可在「关于」页查看其他联系方式。</p>
+          <p class="lead-note">也可在「关于」页查看其他联系方式。</p>
         )}
       </div>
     )
@@ -120,17 +92,17 @@ const mailto = email ? `mailto:${email}?subject=${encodeURIComponent(mailSubject
   {/* DoD ②：无论端点是否配置，都保留一条不依赖动态层的兜底路径 */}
   {
     endpoint && mailto && (
-      <p class="mt-4 text-xs opacity-70">
+      <p class="fallback-note">
         表单打不开？也可以
-        <a href={mailto} data-lead-fallback={mode} class="underline underline-offset-2">直接发邮件给我</a>。
+        <a href={mailto} data-lead-fallback={mode}>直接发邮件给我</a>。
       </p>
     )
   }
 
   {
     isSubscribe && (
-      <p class="mt-4 text-xs opacity-60">
-        每封邮件都带退订链接；你的邮箱不会被出售或用于广告。详见<a href="/privacy" class="underline underline-offset-2">隐私政策</a>。
+      <p class="fine-print">
+        每封邮件都带退订链接；你的邮箱不会被出售或用于广告。详见<a href="/privacy">隐私政策</a>。
       </p>
     )
   }

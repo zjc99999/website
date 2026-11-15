@@ -10,6 +10,11 @@
  *  - 首屏禁止：长段落、技能标签云、全量日志、动效轮播、聊天挂件、cookie 横幅（均未在模板出现）
  *  - 零客户端 JS：本页无 <script>、无 client:* 指令
  *
+ * 「逻辑递进」是本次视觉改造的核心诉求：L2 顶部先给一条横向「阅读路径」
+ * 导览（身份 → 作品 → 创作记录 → 能力证据 → 开始合作），再用一条纵向
+ * 「递进脊线」把四个 section 串成 01/02/03/04 的可见阅读顺序。两者都是
+ * 纯 HTML + 纯 CSS，不引入任何 JS、内联 style 或事件属性（E7 / CSP 门禁）。
+ *
  * 证据链解析在构建期完成（src/lib/evidence.ts），任一 evidence_id 指向
  * 不存在条目会让 astro build 失败，因此首页渲染出的证据链接均已验证。
  */
@@ -53,51 +58,84 @@ const capItems = await Promise.all(
     value={profile.value}
   />
 
-  <!-- L2 / 30 秒层：一次滚动内依次看到作品、近期记录、能力证据 -->
-  <div class="mx-auto max-w-3xl space-y-16 px-6 pb-8">
-    <section aria-labelledby="featured-heading">
-      <h2 id="featured-heading" class="text-2xl font-semibold">精选作品</h2>
-      <p class="mt-1 text-sm opacity-70">每个都能点进去看创作记录</p>
-      <div class="mt-6 grid gap-4 sm:grid-cols-2">
-        {products.map((p) => (
-          <ProductCard
-            id={p.id}
-            title={p.data.title}
-            tagline={p.data.tagline}
-            stage={p.data.stage}
-            url={p.data.url}
-            repoUrl={p.data.repo_url}
-            launchDate={p.data.launch_date}
-            metrics={p.data.metrics}
-            cover={p.data.cover}
-          />
-        ))}
+  <!-- L2 / 30 秒层：先给一张「阅读路径」地图，再沿递进脊线逐层展开 -->
+  <div class="l2">
+    <div class="wrap">
+      <!-- 横向阅读路径：一眼看清「身份 → 作品 → 记录 → 证据 → 合作」 -->
+      <div class="path-ribbon">
+        <p class="eyebrow">阅读路径 · 从身份到合作</p>
+        <ol>
+          <li><a href="#hero-title">身份</a></li>
+          <li><a href="#featured-heading">作品</a></li>
+          <li><a href="#log-heading">创作记录</a></li>
+          <li><a href="#cap-heading">能力证据</a></li>
+          <li><a href="#cta-heading" class="is-dest">开始合作</a></li>
+        </ol>
       </div>
-    </section>
 
-    <section aria-labelledby="log-heading">
-      <h2 id="log-heading" class="text-2xl font-semibold">近期创作记录</h2>
-      <div class="mt-6">
-        <LogTimeline
-          items={logs.map((l) => ({
-            id: l.id,
-            title: l.data.title,
-            summary: l.data.summary,
-            kind: l.data.kind,
-            publishedAt: l.data.published_at,
-          }))}
-        />
+      <!-- 纵向递进脊线：把四个 section 串成 01 → 02 → 03 → 04 -->
+      <div class="progression">
+        <section class="step" aria-labelledby="featured-heading">
+          <span class="step-index" aria-hidden="true">01</span>
+          <div class="step-body">
+            <p class="eyebrow">WORK · 先看做了什么</p>
+            <h2 id="featured-heading" class="section-title">精选作品</h2>
+            <p class="section-lead">每个都能点进去看创作记录，用结果说话。</p>
+            <div class="card-grid">
+              {products.map((p) => (
+                <ProductCard
+                  id={p.id}
+                  title={p.data.title}
+                  tagline={p.data.tagline}
+                  stage={p.data.stage}
+                  url={p.data.url}
+                  repoUrl={p.data.repo_url}
+                  launchDate={p.data.launch_date}
+                  metrics={p.data.metrics}
+                  cover={p.data.cover}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section class="step" aria-labelledby="log-heading">
+          <span class="step-index" aria-hidden="true">02</span>
+          <div class="step-body">
+            <p class="eyebrow">PROCESS · 过程也摊开给你看</p>
+            <h2 id="log-heading" class="section-title">近期创作记录</h2>
+            <p class="section-lead">决策、构建、变更、复盘，不一定长，但都是真的。</p>
+            <LogTimeline
+              items={logs.map((l) => ({
+                id: l.id,
+                title: l.data.title,
+                summary: l.data.summary,
+                kind: l.data.kind,
+                publishedAt: l.data.published_at,
+              }))}
+            />
+          </div>
+        </section>
+
+        <section class="step" aria-labelledby="cap-heading">
+          <span class="step-index" aria-hidden="true">03</span>
+          <div class="step-body">
+            <p class="eyebrow">PROOF · 每条能力都附证据</p>
+            <h2 id="cap-heading" class="section-title">能力（附证据）</h2>
+            <p class="section-lead">不写「精通 XX」，每条都链接到具体作品或日志。</p>
+            <CapabilityList items={capItems} />
+          </div>
+        </section>
+
+        <!-- 用显式 aria-label 而非 aria-labelledby：避免与内部 CTA 的 region
+             同名（axe landmark-unique 要求同角色 landmark 名称唯一）。 -->
+        <section class="step" aria-label="第四步 · 开始合作">
+          <span class="step-index" aria-hidden="true">04</span>
+          <div class="step-body">
+            <CTA />
+          </div>
+        </section>
       </div>
-    </section>
-
-    <section aria-labelledby="cap-heading">
-      <h2 id="cap-heading" class="text-2xl font-semibold">能力（附证据）</h2>
-      <p class="mt-1 text-sm opacity-70">不写「精通 XX」，每条都链接到具体作品或日志</p>
-      <div class="mt-6">
-        <CapabilityList items={capItems} />
-      </div>
-    </section>
-
-    <CTA />
+    </div>
   </div>
 </BaseLayout>

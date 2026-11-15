@@ -1,9 +1,12 @@
 ---
 /**
- * 主导航（≤5 项，E6）。全站共用，currentPath 用来标 aria-current。
- * 所有链接键盘可达；当前页用 aria-current="page" 标注（a11y）。
+ * 主导航（≤5 项，E6）+ 站点品牌。全站共用，currentPath 用来标 aria-current。
+ *
+ * 品牌链接刻意放在 <nav aria-label="主导航"> 之外：e2e 断言该导航内链接 ≤5，
+ * 品牌若放进 nav 会占掉一个名额。当前页用 aria-current="page" 标注（a11y），
+ * 强调色下划线由 .nav-link[aria-current] 在 global.css 里提供（纯 CSS）。
  */
-import { NAV } from '../lib/constants';
+import { NAV, SITE } from '../lib/constants';
 
 interface Props {
   currentPath?: string;
@@ -11,19 +14,39 @@ interface Props {
 const { currentPath = '' } = Astro.props;
 ---
 
-<nav aria-label="主导航" class="mx-auto flex max-w-3xl flex-wrap gap-6 px-6 py-5 text-sm">
-  {
-    NAV.map((item) => {
-      const active = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
-      return (
-        <a
-          href={item.href}
-          aria-current={active ? 'page' : undefined}
-          class:list={['no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2', { 'font-semibold': active, 'opacity-70': !active }]}
-        >
-          {item.label}
-        </a>
-      );
-    })
-  }
-</nav>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="/" class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="22" height="22" fill="none" aria-hidden="true">
+          <path
+            d="M20 44 L32 18 L44 44 M25 35 H39"
+            stroke="currentColor"
+            stroke-width="5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span>{SITE.name}</span>
+    </a>
+    <nav aria-label="主导航" class="main-nav">
+      {
+        NAV.map((item) => {
+          const active =
+            currentPath === item.href ||
+            (item.href !== '/' && currentPath.startsWith(item.href));
+          return (
+            <a
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              class="nav-link"
+            >
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+  </div>
+</header>

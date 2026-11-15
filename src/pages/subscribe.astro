@@ -5,17 +5,17 @@ import SubscribeForm from '../components/SubscribeForm.astro';
 ---
 
 <BaseLayout title="订阅更新 · Atelier" description="订阅创作记录与产品更新，可随时退订" currentPath="/subscribe">
-  <div class="mx-auto max-w-3xl px-6 py-12">
-    <h1 class="text-3xl font-semibold">订阅更新</h1>
-    <p class="mt-2 opacity-80">
+  <div class="wrap page">
+    <h1 class="page-title">订阅更新</h1>
+    <p class="page-lead">
       不定期，只发我自己写的东西：新作品、关键决策、复盘。不转卖邮箱，不掺广告。
     </p>
 
-    <div class="mt-8">
+    <div class="block-gap">
       <SubscribeForm mode="subscribe" />
     </div>
 
-    <section class="prose mt-10 text-sm opacity-80" aria-labelledby="privacy-heading">
+    <section class="prose section-block" aria-labelledby="privacy-heading">
       <h2 id="privacy-heading">关于你的数据</h2>
       <ul>
         <li>订阅需要你主动勾选同意；提交时会带上<strong>同意来源</strong>（站点与订阅页），同意时间由接收端点在收到时记录，本站不伪造客户端时间。</li>

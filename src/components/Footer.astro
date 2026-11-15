@@ -17,22 +17,24 @@ const { name, socials = [] } = Astro.props;
 const links = socials.slice(0, SOCIAL_LIMIT);
 ---
 
-<footer class="mx-auto max-w-3xl px-6 py-10 text-sm opacity-70">
-  <p>© {new Date().getFullYear()} {name} · 内容与代码同仓，明文可导出</p>
-  {
-    links.length > 0 && (
-      <ul class="mt-2 flex flex-wrap gap-4">
-        {links.map((s) => (
-          <li>
-            <a href={s.url} rel="me noopener noreferrer" class="underline">{s.label} ↗</a>
-          </li>
-        ))}
-      </ul>
-    )
-  }
-  <p class="mt-2">
-    <a href="/subscribe" class="underline">订阅更新</a> ·
-    <a href="/contact" class="underline">联系</a> ·
-    <a href="/rss.xml" class="underline">RSS</a>
-  </p>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>© {new Date().getFullYear()} {name} · 内容与代码同仓，明文可导出</p>
+    {
+      links.length > 0 && (
+        <ul class="footer-links">
+          {links.map((s) => (
+            <li>
+              <a href={s.url} rel="me noopener noreferrer">{s.label} ↗</a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <p class="footer-links">
+      <a href="/subscribe">订阅更新</a>
+      <a href="/contact">联系</a>
+      <a href="/rss.xml">RSS</a>
+    </p>
+  </div>
 </footer>
