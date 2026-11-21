@@ -1,0 +1,82 @@
+---
+/**
+ * 能力证据页（L3 / 3 分钟层）。每条能力 = 一句可验证的陈述 + 逐条展开的证据。
+ *
+ * 与 /capabilities 列表（一句话 + 证据 chip）不同，这里把每个 evidence_id 展开成
+ * 带「类型标签 + 标题 + 原始 id」的证据卡片，点开即跳到对应作品 / 日志 / 能力 / 页面，
+ * 形成「主张 → 依据」的完整闭环——这正是本站「能力必须挂证据」纪律的落地页。
+ *
+ * 证据在构建期由 src/lib/evidence.ts 解析：任一坏 id → throw → astro build 失败，
+ * 因此这里渲染出的每条证据都已确认真实存在（E4-c 硬校验）。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { render } from 'astro:content';
+import { getCapabilities } from '../../lib/queries';
+import { resolveEvidenceList } from '../../lib/evidence';
+import { formatDate } from '../../lib/constants';
+
+export async function getStaticPaths() {
+  const capabilities = await getCapabilities();
+  return capabilities.map((c) => ({ params: { id: c.id }, props: { capability: c } }));
+}
+
+const { capability } = Astro.props;
+const { Content } = await render(capability);
+const d = capability.data;
+
+/** 集合名 → 中文证据类型标签 */
+const KIND_LABEL: Record<string, string> = {
+  products: '作品',
+  log: '创作日志',
+  cases: '案例',
+  capabilities: '能力',
+  pages: '页面',
+};
+
+const evidence = (await resolveEvidenceList(d.evidence_ids)).map((e) => {
+  const slash = e.rawId.indexOf('/');
+  const collection = slash > 0 ? e.rawId.slice(0, slash) : '';
+  return { ...e, kind: KIND_LABEL[collection] ?? collection };
+});
+---
+
+<BaseLayout
+  title={`${d.title} · 能力证据 · Atelier`}
+  description={d.summary}
+  currentPath="/capabilities"
+  seo={{ type: 'article', publishedAt: d.published_at, modifiedAt: d.updated_at, seo: d.seo }}
+>
+  <article class="wrap page">
+    <a href="/capabilities" class="back-link">← 返回能力列表</a>
+    <p class="cap-category">{d.category}</p>
+    <h1 class="page-title">{d.title}</h1>
+    <p class="page-lead">{d.statement}</p>
+    <p class="cap-evidence-meta">
+      {formatDate(d.published_at)} 记录 · {evidence.length} 条证据 · 点开任一条即可核验
+    </p>
+
+    <div class="prose prose-block">
+      <Content />
+    </div>
+
+    <section class="section-block" aria-labelledby="evidence-heading">
+      <h2 id="evidence-heading" class="section-sub">证据链（{evidence.length}）</h2>
+      <p class="section-note">
+        每条能力都必须挂在真实、存在的内容条目上（构建期强制校验）——下面就是这条主张的全部依据。
+      </p>
+      <ul class="evidence-grid">
+        {
+          evidence.map((e) => (
+            <li class="evidence-card">
+              <span class="evidence-kind">{e.kind}</span>
+              <a href={e.href} class="evidence-card-title">
+                {e.label} →
+              </a>
+              <code class="evidence-id">{e.rawId}</code>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
