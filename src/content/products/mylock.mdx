@@ -1,0 +1,52 @@
+---
+title: "MyLock 私人数据保险柜"
+summary: "本地优先、零知识、多端同钥的私人数据保险柜：把文件加密成静态密文目录，解锁后映射成一个可写的透明文件夹。无云、无账号、无遥测、无 AI；单份 Rust 内核驱动 Windows 与 Android 双形态。"
+tagline: "拔掉介质是保险柜，插回来又变回你的文件夹"
+stage: building
+featured: true
+order: 3
+published_at: 2026-11-21
+status: published
+visibility: public
+tags: ["加密","隐私","本地优先","Rust","Tauri","零知识"]
+locale: zh-CN
+repo_url: "https://github.com/zjc99999/mylock"
+cover: "../../assets/mylock-cover.png"
+metrics:
+  版本: v0.1.0-alpha（封闭内测）
+  内核: "Rust · 3 个 crate"
+  形态: "透明加密文件夹 / 生物识别暗格"
+  测试向量: "30 derived + 13 negative"
+---
+
+## 这是什么
+
+MyLock 把本机的一组文件加密成一个**静态的普通文件目录（vault）**：拔掉存放介质，它是谁也打不开的保险柜；插回装了 MyLock 的设备、输一次口令，它又变回你原来那个文件夹。
+
+- **Windows 桌面**：把 vault 通过 loopback WebDAV 映射成一个 OS 盘符（如 `Z:`），写入即加密、读回即解密；非驱动级（不用 WinFsp/FUSE）。
+- **Android**：生物识别暗格，明文只在内存里，不落盘。
+- **恢复 CLI**：`mylock` 命令，9 个子命令负责建库、导出、校验与密钥轮换。
+- **单份内核**：桌面与移动共用唯一的 `mylock-core`，密码学只有一处实现。
+
+No Cloud · No AI · No Telemetry · No Account——没有服务端、账号体系、遥测与埋点；开发者从不接收、也看不到你的文件、口令和密钥。源码：[github.com/zjc99999/mylock](https://github.com/zjc99999/mylock)。
+
+## 为什么做
+
+云同步客户端、操作系统索引、桌面搜索、备份与遥测，会在你**已授权**的前提下把明文复制走。MyLock 的目标不是「更强的 TLS」（传输加密早已被解决），而是**让明文根本不出现在这些采集器能读到的地方**。
+
+所以它真正的对手不是偷盘的贼，而是「合法采集者」——云盘、索引、端侧 AI 助手、截图与版本历史。判断一个隐私产品有没有用，要看它换掉的到底是什么威胁模型，而不是又加了多少位密钥。
+
+## 设计上的取舍
+
+- **把边界写进文档，而不是口号**：仅未解锁态防合法采集者；解锁态只是缓解（透明文件夹的固有代价）；换口令是零吊销，真吊销要轮换密钥并物理销毁旧介质；不防设备已攻陷、不防解锁态截屏。防得住、缓解、防不住，三档分清楚。
+- **无驱动优先**：用 `127.0.0.1` 回环 WebDAV + `net use` 代替 WinFsp，避开 GPL 许可与商业授权，代价是非驱动级、挂载点没有逐请求认证。拒绝在云同步根目录内挂载。
+- **成熟范式组合，不做自创密码学**：XChaCha20-Poly1305（1 MiB 分块、每块独立 nonce）+ Argon2id（显式 p=4）+ AES-256-KW 包裹 + HKDF 域分离 + versionMac 防降级。格式层不创新，创新在产品层——载体无关、主动隔离合法采集者、双形态同钥。
+- **逐字节契约当硬约束**：`test-vectors.json` 是唯一契约，Windows/Rust/CLI 已验收，Android 真机 30/30 derived、13/13 negative、指纹 `d45b8659…02fa`，三平台 CI 已配置。
+- **内核实现 ≠ 产品发布**：当前是 alpha 封闭内测，未经第三方安全审计、未代码签名、未产出可分发安装包、未上架商店；白皮书、隐私政策与合规清单都是草案。请只用它存可以随时重建的数据。
+
+![Android 解锁后的文件列表（明文只在内存，不落盘）](/images/mylock-android-unlocked.png)
+
+![Windows 日常操作区：新建、解锁映射、结构校验](/images/mylock-windows-controls.png)
+
+{/* 关联创作记录：在 src/content/log/ 某条日志的 frontmatter 写 product_id: mylock，
+本作品详情页底部就会自动列出「这个作品的创作记录」。 */}
