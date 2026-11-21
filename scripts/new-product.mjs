@@ -114,6 +114,11 @@ function body(slug, title) {
 关联创作记录：在 src/content/log/ 某条日志的 frontmatter 写 product_id: ${safeSlug}，
 本作品详情页底部就会自动列出「这个作品的创作记录」。
 
+沉淀能力：作品发布并写好创作记录后，回头看看这个过程沉淀出哪些可复用的能力，
+用 pnpm new:capability 在 src/content/capabilities/ 补一条，evidence_ids 至少填
+products/${safeSlug} 加相关日志（证据必须真实存在，否则 build 会失败）。
+能力是「事后从过程里抽象出来的证明」，不要新建作品时机械生成。
+
 发布：git add . && git commit -m "content: 添加作品 ${safeTitle}" && git push origin main
 */}
 `;
