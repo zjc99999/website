@@ -13,6 +13,8 @@ interface LogItem {
   summary: string;
   kind: string;
   publishedAt: Date;
+  /** 可选：所属作品标签（跨项目混合时间线用） */
+  project?: { label: string; isSite?: boolean };
 }
 
 interface Props {
@@ -38,6 +40,11 @@ const Heading = headingLevel;
         <div class="tl-meta">
           <time datetime={item.publishedAt.toISOString()}>{formatDate(item.publishedAt)}</time>
           <span class="tl-kind">{KIND_LABEL[item.kind] ?? item.kind}</span>
+          {item.project && (
+            <span class:list={['tl-project', { 'is-site': item.project.isSite }]}>
+              {item.project.isSite ? '站点' : `项目 · ${item.project.label}`}
+            </span>
+          )}
         </div>
         <Heading class="tl-title">
           <a href={`/log/${item.id}`}>{item.title}</a>

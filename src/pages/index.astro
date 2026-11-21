@@ -26,6 +26,7 @@ import CapabilityList from '../components/CapabilityList.astro';
 import CTA from '../components/CTA.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { isPublicProd, FEATURED_LIMIT, RECENT_LOG_LIMIT, CAPABILITY_LIMIT } from '../lib/constants';
+import { getLogTimelineItems } from '../lib/queries';
 import { resolveEvidenceList } from '../lib/evidence';
 
 const profile = (await getEntry('profile', 'me'))!.data;
@@ -38,6 +39,7 @@ const products = (await getCollection('products', isPublicProd))
 const logs = (await getCollection('log', isPublicProd))
   .sort((a, b) => b.data.published_at.getTime() - a.data.published_at.getTime())
   .slice(0, RECENT_LOG_LIMIT);
+const recentLogItems = await getLogTimelineItems(logs);
 
 const capabilities = (await getCollection('capabilities', isPublicProd)).slice(0, CAPABILITY_LIMIT);
 const capItems = await Promise.all(
@@ -106,13 +108,7 @@ const capItems = await Promise.all(
             <h2 id="log-heading" class="section-title">近期创作记录</h2>
             <p class="section-lead">决策、构建、变更、复盘，不一定长，但都是真的。</p>
             <LogTimeline
-              items={logs.map((l) => ({
-                id: l.id,
-                title: l.data.title,
-                summary: l.data.summary,
-                kind: l.data.kind,
-                publishedAt: l.data.published_at,
-              }))}
+              items={recentLogItems}
             />
           </div>
         </section>

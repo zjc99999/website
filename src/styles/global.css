@@ -727,6 +727,21 @@ main {
   font-size: 0.72rem;
   font-weight: 600;
 }
+/* 跨项目时间线的所属作品标签（构建期生成，静态文本） */
+.tl-project {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 0.4rem;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.tl-project.is-site {
+  border-color: var(--line-strong);
+  background: transparent;
+  color: var(--subtle);
+}
 .tl-title {
   margin: 0.35rem 0 0;
   font-size: 1.05rem;

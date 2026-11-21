@@ -2,9 +2,10 @@
 /** 创作日志全量列表（L3）。支持 6 种短类型，100 字也能发（EX-6 防弃更）。 */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LogTimeline from '../../components/LogTimeline.astro';
-import { getLogs } from '../../lib/queries';
+import { getLogs, getLogTimelineItems } from '../../lib/queries';
 
 const logs = await getLogs();
+const items = await getLogTimelineItems(logs);
 ---
 
 <BaseLayout title="创作日志 · Atelier" description="从想法到上线的全过程记录" currentPath="/log">
@@ -18,13 +19,7 @@ const logs = await getLogs();
       <LogTimeline
         showAll
         headingLevel="h2"
-        items={logs.map((l) => ({
-          id: l.id,
-          title: l.data.title,
-          summary: l.data.summary,
-          kind: l.data.kind,
-          publishedAt: l.data.published_at,
-        }))}
+        items={items}
       />
     </div>
 

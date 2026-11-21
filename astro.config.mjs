@@ -59,6 +59,15 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  // 严格 CSP 要求产物零内联 style 属性（scripts/csp-check.mjs 的硬门禁）。
+  // Astro 默认用 Shiki 高亮 Markdown 代码块，会输出 <pre style="..."> 与
+  // <span style="color:...">；即便 dual-theme + CSS 变量也仍是内联 style。
+  // 本项目零新增依赖、代码块极少（当前仅 1 处），故关闭内置高亮：
+  // 代码块退化为干净的 <pre><code>，由 global.css 的 .prose pre/.prose code
+  // 提供边框、圆角、内边距与等宽字体，可读性不降级，且任何未来代码块都不会
+  // 再触发 CSP 门禁——一劳永逸。若将来确需彩色 token，再评估在配置层引入
+  // class-based 高亮方案（不可放宽 csp-check 门禁来掩盖）。
+  markdown: { syntaxHighlight: false },
   // Astro 7 把 compressHTML 默认值从 true 改为 'jsx'，会吞掉行内元素间空格；
   // 本项目中文文案与行内链接较多，显式恢复 HTML 语义压缩（规划书 EX-2）。
   compressHTML: true,

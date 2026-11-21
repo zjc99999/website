@@ -20,6 +20,45 @@ export async function getLogs() {
   );
 }
 
+/** 时间线展示项：在 LogItem 基础上于构建期解析出所属作品标签 */
+export type LogTimelineItem = {
+  id: string;
+  title: string;
+  summary: string;
+  kind: string;
+  publishedAt: Date;
+  /** 所属作品标签；无 product_id 的站点级日志标为「站点」（isSite=true） */
+  project?: { label: string; isSite?: boolean };
+};
+
+/**
+ * 把日志映射成时间线展示项，并解析每条日志的关联作品标签（构建期完成，零客户端 JS）。
+ * 用于 /log 与首页这类「跨项目混合」的时间线，让读者一眼区分记录属于哪个作品；
+ * 作品详情页不调用本函数（整页同属一个作品，标签冗余）。
+ */
+export async function getLogTimelineItems(logs: CollectionEntry<'log'>[]): Promise<LogTimelineItem[]> {
+  return Promise.all(
+    logs.map(async (l) => {
+      const ref = l.data.product_id;
+      const productId = ref && (typeof ref === 'string' ? ref : ref.id);
+      let project: LogTimelineItem['project'] = { label: '站点', isSite: true };
+      if (productId) {
+        const p = await getEntry('products', productId);
+        // 指向存在且可解析的作品才显示作品名；指向无效/不可见条目时回退为「站点」
+        if (p) project = { label: p.data.title };
+      }
+      return {
+        id: l.id,
+        title: l.data.title,
+        summary: l.data.summary,
+        kind: l.data.kind,
+        publishedAt: l.data.published_at,
+        project,
+      };
+    }),
+  );
+}
+
 export async function getCapabilities() {
   return (await getCollection('capabilities', isPublicProd)).sort((a, b) =>
     a.data.category.localeCompare(b.data.category, 'zh-CN'),
