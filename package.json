@@ -36,10 +36,10 @@
     "make:cover": "node scripts/make-cover.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "8.1.5",
+    "@astrojs/mdx": "8.1.6",
     "@astrojs/rss": "4.0.19",
-    "@astrojs/sitemap": "3.7.4",
-    "astro": "7.4.11",
+    "@astrojs/sitemap": "3.7.6",
+    "astro": "7.4.13",
     "zod": "4.6.7"
   },
   "devDependencies": {
